@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "core/**/*.ts",
+    "hostinger/**/*.ts",
+    "supabase/**/*.ts",
+    "github/**/*.ts",
+    "shared/**/*.ts",
+    "tests/**/*.ts",
+    "server.ts"
+  ]
+}

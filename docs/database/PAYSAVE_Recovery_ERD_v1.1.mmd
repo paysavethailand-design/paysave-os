@@ -1,0 +1,193 @@
+erDiagram
+    PARTNERS ||--o{ BRANCHES : contains
+    PARTNERS ||--o{ MEMBERSHIPS : grants
+    USERS ||--o{ MEMBERSHIPS : joins
+    PARTNERS ||--o{ ROLES : defines
+    MEMBERSHIPS ||--o{ MEMBERSHIP_ROLES : receives
+    ROLES ||--o{ MEMBERSHIP_ROLES : assigned_as
+    ROLES ||--o{ ROLE_PERMISSIONS : grants
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : included_in
+
+    PARTNERS ||--o{ CUSTOMERS : owns
+    CUSTOMERS ||--o{ CUSTOMER_CONTACTS : has
+    CUSTOMERS ||--o{ CUSTOMER_ADDRESSES : has
+    CUSTOMERS ||--o{ CONTRACTS : signs
+    CONTRACTS ||--o{ CONTRACT_BALANCE_HISTORY : snapshots
+    CUSTOMERS ||--o{ CASES : subject_of
+    CONTRACTS ||--o{ CASES : produces
+    BRANCHES ||--o{ CASES : scopes
+    CASES ||--o{ CASE_STATUS_HISTORY : transitions
+    CASES ||--o{ CASE_NOTES : records
+
+    USERS ||--o| AGENTS : represents
+    PARTNERS ||--o{ AGENTS : employs
+    BRANCHES ||--o{ AGENTS : locates
+    CASES ||--o{ ASSIGNMENTS : allocated_by
+    AGENTS ||--o{ ASSIGNMENTS : receives
+
+    PARTNERS ||--o{ KPI_DEFINITIONS : configures
+    KPI_DEFINITIONS ||--o{ KPI_TARGETS : targets
+    KPI_DEFINITIONS ||--o{ KPI_EVENTS : measures
+    AGENTS ||--o{ KPI_EVENTS : earns
+    CASES ||--o{ KPI_EVENTS : originates
+    KPI_DEFINITIONS ||--o{ KPI_PERIOD_RESULTS : aggregates
+    AGENTS ||--o{ KPI_PERIOD_RESULTS : evaluated_for
+
+    PARTNERS ||--o{ COMMISSION_PLANS : configures
+    COMMISSION_PLANS ||--o{ COMMISSION_RUNS : calculates
+    COMMISSION_RUNS ||--o{ COMMISSION_ITEMS : contains
+    AGENTS ||--o{ COMMISSION_ITEMS : earns
+    CASES ||--o{ COMMISSION_ITEMS : originates
+
+    CUSTOMERS ||--o{ PAYMENTS : makes
+    CONTRACTS ||--o{ PAYMENTS : receives
+    CASES ||--o{ PAYMENTS : attributes
+
+    USERS ||--o{ NOTIFICATIONS : receives
+    CUSTOMERS ||--o{ NOTIFICATIONS : receives
+    CASES ||--o{ NOTIFICATIONS : triggers
+
+    CUSTOMERS ||--o{ DOCUMENTS : owns
+    CONTRACTS ||--o{ DOCUMENTS : owns
+    CASES ||--o{ DOCUMENTS : owns
+    ASSIGNMENTS ||--o{ DOCUMENTS : owns
+    PAYMENTS ||--o{ DOCUMENTS : owns
+    COMMISSION_ITEMS ||--o{ DOCUMENTS : owns
+
+    PARTNERS {
+      bigint id PK
+      uuid public_id UK
+      citext code UK
+      enum status
+    }
+    USERS {
+      bigint id PK
+      uuid public_id UK
+      uuid auth_user_id UK
+      citext email UK
+      enum status
+    }
+    MEMBERSHIPS {
+      bigint id PK
+      bigint partner_id FK
+      bigint user_id FK
+      bigint branch_id FK
+    }
+    ROLES {
+      bigint id PK
+      bigint partner_id FK
+      citext code
+    }
+    PERMISSIONS {
+      bigint id PK
+      citext code UK
+    }
+    CUSTOMERS {
+      bigint partner_id PK,FK
+      bigint id PK
+      uuid public_id UK
+      text external_customer_ref
+    }
+    CONTRACTS {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint customer_id FK
+      text external_contract_ref
+      enum status
+    }
+    CASES {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint customer_id FK
+      bigint contract_id FK
+      text case_number
+      enum status
+      enum priority
+    }
+    AGENTS {
+      bigint id PK
+      bigint partner_id FK
+      bigint user_id FK
+      text employee_code
+    }
+    ASSIGNMENTS {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint case_id FK
+      bigint agent_id FK
+      enum status
+    }
+    KPI_DEFINITIONS {
+      bigint id PK
+      bigint partner_id FK
+      text code
+      int formula_version
+    }
+    KPI_EVENTS {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint agent_id FK
+      bigint case_id FK
+      text source_event_key UK
+    }
+    KPI_PERIOD_RESULTS {
+      bigint id PK
+      bigint kpi_definition_id FK
+      bigint agent_id FK
+      enum status
+    }
+    COMMISSION_PLANS {
+      bigint id PK
+      bigint partner_id FK
+      int formula_version
+    }
+    COMMISSION_RUNS {
+      bigint id PK
+      bigint commission_plan_id FK
+      enum status
+    }
+    COMMISSION_ITEMS {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint commission_run_id FK
+      bigint agent_id FK
+      decimal commission_amount
+    }
+    PAYMENTS {
+      bigint partner_id PK,FK
+      bigint id PK
+      bigint contract_id FK
+      bigint case_id FK
+      decimal amount
+      enum status
+    }
+    NOTIFICATIONS {
+      bigint partner_id PK,FK
+      bigint id PK
+      text channel
+      enum status
+      text idempotency_key UK
+    }
+    DOCUMENTS {
+      bigint partner_id PK,FK
+      bigint id PK
+      enum scope
+      text object_path UK
+      char sha256
+      enum status
+    }
+    CASE_STATUS_HISTORY {
+      timestamptz occurred_at PK
+      bigint id PK
+      bigint case_id FK
+      enum from_status
+      enum to_status
+    }
+    AUDIT_EVENTS {
+      timestamptz occurred_at PK
+      bigint id PK
+      bigint partner_id
+      text action
+      text resource_type
+      uuid correlation_id
+    }

@@ -1,0 +1,22 @@
+{
+  "name": "@paysave/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./core/index.ts",
+    "./read-models": "./read-models.ts",
+    "./server": "./server.ts",
+    "./testing": "./shared/testing.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage-stage5-2": "vitest run --coverage --coverage.reporter=text --coverage.include=core/registry/provider-registry.ts --coverage.include=core/resolvers/capability-resolver.ts --coverage.include=core/validation/registry-integrity-validator.ts --coverage.include=core/resolvers/environment-binding-resolver.ts --coverage.include=core/providers/execution-permit.ts --coverage.thresholds.statements=100 --coverage.thresholds.branches=100 --coverage.thresholds.functions=100 --coverage.thresholds.lines=100",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

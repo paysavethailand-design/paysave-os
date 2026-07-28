@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: paysave-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PAYSAVE_LOCAL_DB_NAME:?missing PAYSAVE_LOCAL_DB_NAME}
+      POSTGRES_USER: ${PAYSAVE_LOCAL_DB_OWNER:?missing PAYSAVE_LOCAL_DB_OWNER}
+      POSTGRES_PASSWORD: ${PAYSAVE_LOCAL_DB_PASSWORD:?missing PAYSAVE_LOCAL_DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+    ports:
+      - "127.0.0.1:${PAYSAVE_LOCAL_DB_PORT:-55432}:5432"
+    volumes:
+      - paysave_local_pg17:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    command:
+      - postgres
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - listen_addresses=*
+
+volumes:
+  paysave_local_pg17:
+    name: paysave_local_pg17

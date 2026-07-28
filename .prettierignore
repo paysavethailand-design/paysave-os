@@ -1,0 +1,11 @@
+node_modules
+.npm-cache
+.next
+coverage
+dist
+build
+artifacts
+package-lock.json
+apps/web/next-env.d.ts
+**/*.tsbuildinfo
+config/tailwind/paysave-theme.json

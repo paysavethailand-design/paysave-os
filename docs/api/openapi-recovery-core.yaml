@@ -1,0 +1,982 @@
+openapi: 3.1.0
+info:
+  title: "PAYSAVE OS Recovery Core API — Backend Sprint #2"
+  version: 2.0.0
+  description:
+    Approved M001-M016 only. No DB RPC, direct PostgreSQL adapter, schema, migration, or architecture
+    change.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-PAYSAVE-Proprietary
+servers:
+  - url: /api/v1
+security:
+  - supabaseJwt: []
+tags:
+  - name: Recovery
+    description: Recovery case, assignment, workflow, payment, and promise-to-pay operations.
+paths:
+  /recovery/cases:
+    get:
+      tags:
+        - Recovery
+      summary: Search cases (requires cases.read)
+      operationId: searchRecoveryCases
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          required: false
+          schema: &id001
+            type: string
+            format: uuid
+        - name: partnerId
+          in: query
+          required: false
+          schema: *id001
+        - name: statusId
+          in: query
+          required: false
+          schema: *id001
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          required: false
+          schema: *id001
+        - name: branchId
+          in: query
+          required: false
+          schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Create case using one row insert (requires cases.manage)
+      operationId: createRecoveryCase
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecoveryCaseInput"
+  /recovery/cases/{caseId}:
+    parameters:
+      - name: caseId
+        in: path
+        required: true
+        schema: *id001
+    get:
+      tags:
+        - Recovery
+      summary: Get case detail (requires cases.read)
+      operationId: getRecoveryCase
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    patch:
+      tags:
+        - Recovery
+      summary: Update case using optimistic locking (requires cases.manage)
+      operationId: updateRecoveryCase
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseInput"
+  /recovery/cases/{caseId}/close:
+    parameters:
+      - name: caseId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Close case and append status history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: closeRecoveryCase
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/cases/{caseId}/reopen:
+    parameters:
+      - name: caseId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Reopen case and append status history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: reopenRecoveryCase
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/cases/{caseId}/timeline:
+    parameters:
+      - name: caseId
+        in: path
+        required: true
+        schema: *id001
+    get:
+      tags:
+        - Recovery
+      summary: List append-only case timeline (requires cases.read)
+      operationId: listCaseTimeline
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: before
+          in: query
+          required: false
+          description: Opaque base64url cursor containing the preceding event's occurredAt and id keyset.
+          schema: &id003
+            type: string
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sourceType
+          in: query
+          required: false
+          schema:
+            type: string
+    post:
+      tags:
+        - Recovery
+      summary: Append one immutable timeline event (requires cases.manage)
+      operationId: appendCaseTimelineEvent
+      parameters:
+        - name: x-correlation-id
+          in: header
+          required: false
+          description: Optional caller correlation ID. Must be UUID when supplied; otherwise the API generates one.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTimelineEventInput"
+  /recovery/assignments:
+    post:
+      tags:
+        - Recovery
+      summary: Assign agent using one row insert (requires assignments.manage)
+      operationId: createRecoveryAssignment
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssignmentInput"
+  /recovery/assignments/{assignmentId}/reassign:
+    parameters:
+      - name: assignmentId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Reassign agent and append handoff/history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: reassignRecoveryAssignment
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/assignments/{assignmentId}/accept:
+    parameters:
+      - name: assignmentId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Accept assignment and append history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: acceptRecoveryAssignment
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/assignments/{assignmentId}/reject:
+    parameters:
+      - name: assignmentId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Reject assignment and append history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: rejectRecoveryAssignment
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/assignments/{assignmentId}/complete:
+    parameters:
+      - name: assignmentId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Complete assignment and append history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: completeRecoveryAssignment
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/workflow/instances/{instanceId}/transitions:
+    parameters:
+      - name: instanceId
+        in: path
+        required: true
+        schema: *id001
+    get:
+      tags:
+        - Recovery
+      summary: List transitions from current state (requires cases.read)
+      operationId: listRecoveryWorkflowTransitions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      parameters:
+        - name: partnerId
+          in: query
+          required: false
+          schema: *id001
+  /recovery/workflow/transitions/validate:
+    post:
+      tags:
+        - Recovery
+      summary: Validate state/action/permission without mutation (requires cases.read)
+      operationId: validateRecoveryWorkflowTransition
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateTransitionInput"
+  /recovery/workflow/transitions:
+    post:
+      tags:
+        - Recovery
+      summary: Execute workflow state/history transition
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: executeRecoveryWorkflowTransition
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/field-visits:
+    post:
+      tags:
+        - Recovery
+      summary: Create scheduled field visit (requires assignments.manage)
+      operationId: createRecoveryFieldVisit
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFieldVisitInput"
+  /recovery/field-visits/{visitId}/check-in:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Check in using optimistic locking (requires assignments.manage)
+      operationId: checkInRecoveryFieldVisit
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckpointInput"
+  /recovery/field-visits/{visitId}/check-out:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Check out using optimistic locking (requires assignments.manage)
+      operationId: checkOutRecoveryFieldVisit
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckpointInput"
+  /recovery/field-visits/{visitId}/results:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Append field visit result (requires assignments.manage)
+      operationId: appendRecoveryVisitResult
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVisitResultInput"
+  /recovery/contact-attempts:
+    post:
+      tags:
+        - Recovery
+      summary: Record phone/SMS/LINE/visit/email/other contact (requires assignments.manage)
+      operationId: createRecoveryContactAttempt
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactAttemptInput"
+  /recovery/promises-to-pay:
+    post:
+      tags:
+        - Recovery
+      summary: Create promise to pay (requires cases.manage)
+      operationId: createPromiseToPay
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePromiseInput"
+  /recovery/promises-to-pay/{promiseId}:
+    parameters:
+      - name: promiseId
+        in: path
+        required: true
+        schema: *id001
+    patch:
+      tags:
+        - Recovery
+      summary: Update amount or due date using optimistic locking (requires cases.manage)
+      operationId: updatePromiseToPay
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePromiseInput"
+  /recovery/promises-to-pay/{promiseId}/fulfill:
+    parameters:
+      - name: promiseId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Fulfill promise and append status history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: fulfillPromiseToPay
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/promises-to-pay/{promiseId}/broken:
+    parameters:
+      - name: promiseId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Mark promise broken and append status history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: breakPromiseToPay
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+  /recovery/promises-to-pay/{promiseId}/cancel:
+    parameters:
+      - name: promiseId
+        in: path
+        required: true
+        schema: *id001
+    post:
+      tags:
+        - Recovery
+      summary: Cancel promise and append status history
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      operationId: cancelPromiseToPay
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "501":
+          $ref: "#/components/responses/AtomicTransactionNotSupported"
+components:
+  securitySchemes:
+    supabaseJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthenticated:
+      description: No verified session
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Missing permission or tenant scope
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    AtomicTransactionNotSupported:
+      description: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: atomic_transaction_not_supported
+              message: Atomic multi-aggregate transaction is not yet supported by the current approved architecture.
+            meta:
+              correlationId: 97455214-b91e-4f5e-9e5b-7d68ddbd8c44
+  schemas:
+    Meta:
+      type: object
+      required:
+        - correlationId
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        nextCursor:
+          type:
+            - string
+            - "null"
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+        - meta
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - unauthenticated
+                - forbidden
+                - not_found
+                - validation_failed
+                - conflict
+                - not_implemented
+                - atomic_transaction_not_supported
+                - internal_error
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+        meta:
+          $ref: "#/components/schemas/Meta"
+    ObjectEnvelope:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        meta:
+          $ref: "#/components/schemas/Meta"
+    ListEnvelope:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreateRecoveryCaseInput:
+      type: object
+      required:
+        - branchId
+        - customerId
+        - statusId
+        - priority
+        - openedAt
+        - nextActionAt
+        - businessObjectId
+      additionalProperties: false
+      properties:
+        partnerId: &id002
+          type:
+            - string
+            - "null"
+          format: uuid
+        branchId: *id001
+        customerId: *id001
+        contractId: *id002
+        statusId: *id001
+        priority:
+          type: string
+          minLength: 1
+          maxLength: 100
+        openedAt: *id003
+        nextActionAt: *id003
+        businessObjectId: *id001
+    UpdateCaseInput:
+      type: object
+      required:
+        - expectedVersionNo
+      additionalProperties: false
+      properties:
+        expectedVersionNo:
+          type: integer
+          minimum: 1
+        priority:
+          type: string
+          minLength: 1
+          maxLength: 100
+        nextActionAt: *id003
+        contractId: *id002
+    CreateTimelineEventInput:
+      type: object
+      required:
+        - eventType
+        - occurredAt
+        - sourceType
+        - sourceId
+        - summary
+        - payloadJson
+        - eventVersionId
+        - causationId
+        - visibilityCode
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        eventType:
+          type: string
+          maxLength: 100
+        occurredAt: *id003
+        sourceType:
+          type: string
+          maxLength: 100
+        sourceId: *id001
+        summary:
+          type: string
+          maxLength: 4000
+        payloadJson:
+          type: object
+          additionalProperties: true
+        schemaVersion:
+          type: integer
+          minimum: 1
+          default: 1
+        eventVersionId: *id001
+        causationId: *id001
+        visibilityCode:
+          type: string
+          maxLength: 100
+    CreateAssignmentInput:
+      type: object
+      required:
+        - caseId
+        - agentId
+        - statusId
+        - assignedAt
+        - dueAt
+        - businessObjectId
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        caseId: *id001
+        agentId: *id001
+        teamId: *id002
+        statusId: *id001
+        assignedAt: *id003
+        dueAt: *id003
+        businessObjectId: *id001
+    CreateFieldVisitInput:
+      type: object
+      required:
+        - assignmentId
+        - scheduledAt
+        - outcomeCode
+        - businessObjectId
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        assignmentId: *id001
+        scheduledAt: *id003
+        outcomeCode:
+          type: string
+          maxLength: 100
+        businessObjectId: *id001
+    CheckpointInput:
+      type: object
+      required:
+        - expectedVersionNo
+        - occurredAt
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        expectedVersionNo:
+          type: integer
+          minimum: 1
+        occurredAt: *id003
+    CreateVisitResultInput:
+      type: object
+      required:
+        - outcomeType
+        - payloadJson
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        outcomeType:
+          type: string
+          maxLength: 100
+        payloadJson:
+          type: object
+          additionalProperties: true
+        schemaVersion:
+          type: integer
+          minimum: 1
+          default: 1
+    CreateContactAttemptInput:
+      type: object
+      required:
+        - customerContactId
+        - channelCode
+        - outcomeCode
+        - occurredAt
+        - actorMembershipId
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        visitId: *id002
+        customerContactId: *id001
+        channelCode:
+          type: string
+          enum:
+            - phone
+            - sms
+            - line
+            - visit
+            - email
+            - other
+        outcomeCode:
+          type: string
+          maxLength: 100
+        occurredAt: *id003
+        actorMembershipId: *id001
+    CreatePromiseInput:
+      type: object
+      required:
+        - caseId
+        - customerId
+        - promisedAmount
+        - currencyCode
+        - dueAt
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        caseId: *id001
+        visitId: *id002
+        customerId: *id001
+        promisedAmount:
+          type: number
+          exclusiveMinimum: 0
+        currencyCode:
+          type: string
+          pattern: ^[A-Z]{3}$
+        dueAt: *id003
+        statusCode:
+          type: string
+          default: active
+    UpdatePromiseInput:
+      type: object
+      required:
+        - expectedVersionNo
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        expectedVersionNo:
+          type: integer
+          minimum: 1
+        promisedAmount:
+          type: number
+          exclusiveMinimum: 0
+        dueAt: *id003
+    ValidateTransitionInput:
+      type: object
+      required:
+        - instanceId
+        - currentStateId
+        - actionCode
+      additionalProperties: false
+      properties:
+        partnerId: *id002
+        instanceId: *id001
+        currentStateId: *id001
+        actionCode:
+          type: string
+          minLength: 1
+          maxLength: 100

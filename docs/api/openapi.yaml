@@ -1,0 +1,1397 @@
+openapi: 3.1.0
+info:
+  title: "PAYSAVE OS Backend API — Sprint #1"
+  version: "1.0.0"
+  description: >
+    Authentication, Authorization RBAC, Session Management, and CRUD for Users, Roles, Permissions,
+    Partners, Customers and Assets. Built on the approved M001-M016 schema (stage3_2_batch1-5).
+    Every mutation is authenticated (Supabase JWT), permission-checked, tenant-scoped, and audited
+    (see @paysave/observability AuditSink — RFC-0005 blocks writing directly to audit.audit_events
+    for global control-plane rows, so no code depends on that table).
+  license:
+    name: Proprietary
+    identifier: LicenseRef-PAYSAVE-Proprietary
+servers:
+  - url: /api/v1
+security:
+  - supabaseJwt: []
+tags:
+  - name: Sessions
+    description: Verified session lookup and sign-out operations.
+  - name: Users
+    description: Tenant-scoped user directory administration.
+  - name: Roles
+    description: Role and permission assignment administration.
+  - name: Permissions
+    description: Read-only permission catalog operations.
+  - name: Partners
+    description: Partner tenant administration.
+  - name: Customers
+    description: Tenant-scoped customer administration.
+  - name: Assets
+    description: Tenant-scoped asset administration.
+
+paths:
+  /sessions/me:
+    get:
+      tags: [Sessions]
+      summary: Get the caller's own verified session
+      operationId: getCurrentSession
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    delete:
+      tags: [Sessions]
+      summary: Sign out the caller's current Supabase session
+      operationId: signOutCurrentSession
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signedOut:
+                        type: boolean
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /users:
+    get:
+      tags: [Users]
+      summary: List user directory profiles (requires users.read)
+      operationId: listUsers
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Bounded page of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPageEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Users]
+      summary: Register an iam.users profile for an existing Supabase Auth identity (requires users.manage, global admin per RLS)
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags: [Users]
+      summary: Get a user profile (requires users.read)
+      operationId: getUser
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Users]
+      summary: Update a user's display name/status (requires users.manage)
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Users]
+      summary: >
+        Deactivate a user (status -> suspended). iam.users has no deleted_at column and no DELETE
+        RLS policy, so this is a status transition, never a SQL DELETE. Requires users.manage.
+      operationId: deactivateUser
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 200
+      responses:
+        "200":
+          description: Deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /roles:
+    get:
+      tags: [Roles]
+      summary: List roles in a partner scope (requires roles.read; partnerId query param required for global admins)
+      operationId: listRoles
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - name: partnerId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bounded page of roles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePageEnvelope"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Roles]
+      summary: Create a tenant-scoped role (requires roles.manage)
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /roles/{roleId}:
+    parameters:
+      - $ref: "#/components/parameters/RoleId"
+    get:
+      tags: [Roles]
+      summary: Get a role (requires roles.read)
+      operationId: getRole
+      responses:
+        "200":
+          description: Role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Roles]
+      summary: Update a role's name/status (requires roles.manage)
+      operationId: updateRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Roles]
+      summary: >
+        Soft-delete a role (deleted_at/deleted_by/delete_reason). iam.roles RLS grants no DELETE
+        policy, only UPDATE, so this never issues a SQL DELETE. Requires roles.manage and a
+        non-empty reason.
+      operationId: deleteRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 100
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /roles/{roleId}/permissions:
+    parameters:
+      - $ref: "#/components/parameters/RoleId"
+    get:
+      tags: [Roles]
+      summary: List permissions granted to a role (requires roles.read)
+      operationId: listRolePermissions
+      responses:
+        "200":
+          description: Grants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RolePermission"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Roles]
+      summary: Grant a permission to a role (requires roles.manage)
+      operationId: attachRolePermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissionId]
+              properties:
+                permissionId:
+                  type: string
+                  format: uuid
+                effect:
+                  type: string
+                  enum: [allow, deny]
+                  default: allow
+      responses:
+        "201":
+          description: Granted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RolePermission"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /roles/{roleId}/permissions/{permissionId}:
+    parameters:
+      - $ref: "#/components/parameters/RoleId"
+      - $ref: "#/components/parameters/PermissionId"
+    delete:
+      tags: [Roles]
+      summary: >
+        Always responds 501. iam.role_permissions (M003, Batch #1) has no deleted_at/valid_to
+        column and its RLS grants only SELECT/INSERT/UPDATE, so there is no DML path that removes a
+        grant row this sprint. Fixing this needs a Physical Schema amendment (out of scope: "do not
+        modify database schema/migrations"). Still validates auth/permission/tenant scope and that
+        the grant exists before reporting the gap.
+      operationId: detachRolePermission
+      responses:
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "501":
+          description: Not implemented — see summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /permissions:
+    get:
+      tags: [Permissions]
+      summary: List platform-wide permissions (requires permissions.read)
+      operationId: listPermissions
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Bounded page of permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionPageEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Permissions]
+      summary: Create a platform-wide permission (requires permissions.manage, global admin per RLS)
+      operationId: createPermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePermissionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /permissions/{permissionId}:
+    parameters:
+      - $ref: "#/components/parameters/PermissionId"
+    get:
+      tags: [Permissions]
+      summary: Get a permission (requires permissions.read)
+      operationId: getPermission
+      responses:
+        "200":
+          description: Permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Permissions]
+      summary: >
+        Update a permission's resource/action classification (requires permissions.manage). No
+        delete endpoint exists: iam.permissions has neither a status/deleted_at column nor a DELETE
+        RLS policy — it is append-only platform reference data.
+      operationId: updatePermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePermissionInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /partners:
+    get:
+      tags: [Partners]
+      summary: List partners visible to the caller (requires partners.read)
+      operationId: listPartners
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Bounded page of partners
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerPageEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Partners]
+      summary: Create a new tenant root (requires partners.manage and global administrator scope)
+      operationId: createPartner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartnerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerEnvelope"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /partners/{partnerId}:
+    parameters:
+      - $ref: "#/components/parameters/PartnerId"
+    get:
+      tags: [Partners]
+      summary: Get a partner (requires partners.read)
+      operationId: getPartner
+      responses:
+        "200":
+          description: Partner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Partners]
+      summary: Update a partner's configuration (requires partners.manage)
+      operationId: updatePartner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePartnerInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Partners]
+      summary: >
+        Retire a partner (deleted_at/deleted_by/delete_reason). tenant.partners RLS grants no
+        DELETE policy, only UPDATE. Requires partners.manage and a non-empty reason.
+      operationId: deletePartner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 100
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers in a partner scope (requires customers.read; partnerId query param required for global admins)
+      operationId: listCustomers
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - name: partnerId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bounded page of customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPageEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Customers]
+      summary: >
+        Create a tenant-scoped customer (requires customers.manage). Core crm.customers lifecycle
+        only — identifiers/contacts/addresses child tables are out of scope for Sprint #1.
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /customers/{customerId}:
+    parameters:
+      - $ref: "#/components/parameters/CustomerId"
+    get:
+      tags: [Customers]
+      summary: Get a customer (requires customers.read)
+      operationId: getCustomer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Customers]
+      summary: Update a customer's display name/status (requires customers.manage)
+      operationId: updateCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Customers]
+      summary: >
+        Soft-delete a customer (deleted_at/deleted_by/delete_reason). crm.customers RLS grants no
+        DELETE policy, only UPDATE. Requires customers.manage and a non-empty reason.
+      operationId: deleteCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 100
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /assets:
+    get:
+      tags: [Assets]
+      summary: List assets in a partner scope (requires assets.read; partnerId query param required for global admins)
+      operationId: listAssets
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - name: partnerId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bounded page of assets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetPageEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Assets]
+      summary: >
+        Create a tenant-scoped asset (requires assets.manage). assetTypeId must reference an
+        existing asset.asset_types row in the resolved partner (Asset Type CRUD is out of scope;
+        this validates the FK target and returns 422 instead of a raw DB error).
+      operationId: createAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssetInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetEnvelope"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /assets/{assetId}:
+    parameters:
+      - $ref: "#/components/parameters/AssetId"
+    get:
+      tags: [Assets]
+      summary: Get an asset (requires assets.read)
+      operationId: getAsset
+      responses:
+        "200":
+          description: Asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Assets]
+      summary: Update an asset's display reference/current owner (requires assets.manage)
+      operationId: updateAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAssetInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Assets]
+      summary: >
+        Retire an asset (status transition to "retired", appended to asset_status_history).
+        asset.assets has no deleted_at column and no DELETE RLS policy. Requires assets.manage and
+        a non-empty reasonCode.
+      operationId: retireAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reasonCode]
+              properties:
+                reasonCode:
+                  type: string
+                  maxLength: 100
+      responses:
+        "200":
+          description: Retired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /assets/{assetId}/status:
+    parameters:
+      - $ref: "#/components/parameters/AssetId"
+    post:
+      tags: [Assets]
+      summary: >
+        Transition an asset's lifecycle status, appending an immutable asset_status_history row
+        (DB trigger enforces append-only). Requires assets.manage.
+      operationId: changeAssetStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toStatusCode, reasonCode]
+              properties:
+                toStatusCode:
+                  type: string
+                  maxLength: 100
+                reasonCode:
+                  type: string
+                  maxLength: 100
+      responses:
+        "200":
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Asset is already in the requested status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+components:
+  securitySchemes:
+    supabaseJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Supabase-issued access token, cryptographically verified server-side via
+        supabase.auth.getClaims() and validated against the `paysave` custom claim shape
+        (@paysave/security parsePaysaveClaims) before any route handler runs.
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Bounded page size; out-of-range values return 422 instead of being clamped.
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Opaque keyset cursor — the `id` of the last item from the previous page.
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RoleId:
+      name: roleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PermissionId:
+      name: permissionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PartnerId:
+      name: partnerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AssetId:
+      name: assetId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthenticated:
+      description: No verified session
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Authenticated but missing the required permission or tenant scope
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Not found (or not visible under RLS)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: Conflicts with an existing resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    ValidationFailed:
+      description: Request failed schema or domain validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+
+  schemas:
+    Meta:
+      type: object
+      required: [correlationId]
+      properties:
+        correlationId:
+          type: string
+        nextCursor:
+          type: [string, "null"]
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  unauthenticated,
+                  forbidden,
+                  not_found,
+                  validation_failed,
+                  conflict,
+                  not_implemented,
+                  internal_error,
+                ]
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  message:
+                    type: string
+        meta:
+          $ref: "#/components/schemas/Meta"
+
+    SessionEnvelope:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            activePartnerId:
+              type: [string, "null"]
+              format: uuid
+            roles:
+              type: array
+              items:
+                type: string
+            permissions:
+              type: array
+              items:
+                type: string
+            tenantScope:
+              type: string
+              enum: [active, all]
+            sessionVersion:
+              type: integer
+        meta:
+          $ref: "#/components/schemas/Meta"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        authSubject:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        status:
+          type: string
+        lastSeenAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    UserPageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreateUserInput:
+      type: object
+      required: [authSubject, displayName]
+      properties:
+        authSubject:
+          type: string
+          format: uuid
+          description: Existing Supabase Auth user id, provisioned out of band (no Admin API call is made).
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          default: active
+    UpdateUserInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partnerId:
+          type: string
+          format: uuid
+        templateId:
+          type: [string, "null"]
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: [string, "null"]
+          format: date-time
+    RoleEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Role"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    RolePageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreateRoleInput:
+      type: object
+      required: [code, name]
+      properties:
+        partnerId:
+          type: [string, "null"]
+          format: uuid
+          description: Required for global-admin callers; otherwise defaults to the caller's active partner.
+        templateId:
+          type: [string, "null"]
+          format: uuid
+        code:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          default: active
+    UpdateRoleInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+
+    RolePermission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partnerId:
+          type: string
+          format: uuid
+        roleId:
+          type: string
+          format: uuid
+        permissionId:
+          type: string
+          format: uuid
+        effect:
+          type: string
+          enum: [allow, deny]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        resource:
+          type: string
+        action:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PermissionEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Permission"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    PermissionPageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreatePermissionInput:
+      type: object
+      required: [code, resource, action]
+      properties:
+        code:
+          type: string
+          pattern: "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*$"
+        resource:
+          type: string
+          maxLength: 100
+        action:
+          type: string
+          maxLength: 100
+    UpdatePermissionInput:
+      type: object
+      properties:
+        resource:
+          type: string
+          maxLength: 100
+        action:
+          type: string
+          maxLength: 100
+
+    Partner:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        timezone:
+          type: string
+        defaultCurrency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: [string, "null"]
+          format: date-time
+    PartnerEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Partner"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    PartnerPageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Partner"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreatePartnerInput:
+      type: object
+      required: [code, name, timezone, defaultCurrency]
+      properties:
+        code:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          default: active
+        timezone:
+          type: string
+          maxLength: 100
+        defaultCurrency:
+          type: string
+          pattern: "^[A-Za-z]{3}$"
+    UpdatePartnerInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+        timezone:
+          type: string
+        defaultCurrency:
+          type: string
+          pattern: "^[A-Za-z]{3}$"
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partnerId:
+          type: string
+          format: uuid
+        customerType:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: [string, "null"]
+          format: date-time
+    CustomerEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Customer"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CustomerPageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreateCustomerInput:
+      type: object
+      required: [customerType, displayName]
+      properties:
+        partnerId:
+          type: [string, "null"]
+          format: uuid
+          description: Required for global-admin callers; otherwise defaults to the caller's active partner.
+        customerType:
+          type: string
+          maxLength: 100
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          default: active
+    UpdateCustomerInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partnerId:
+          type: string
+          format: uuid
+        assetTypeId:
+          type: string
+          format: uuid
+        businessObjectId:
+          type: string
+          format: uuid
+        displayRef:
+          type: string
+        currentStatusCode:
+          type: string
+        currentOwnerCustomerId:
+          type: [string, "null"]
+          format: uuid
+        versionNo:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AssetEnvelope:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Asset"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    AssetPageEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Asset"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    CreateAssetInput:
+      type: object
+      required: [assetTypeId, businessObjectId, displayRef, currentStatusCode]
+      properties:
+        partnerId:
+          type: [string, "null"]
+          format: uuid
+          description: Required for global-admin callers; otherwise defaults to the caller's active partner.
+        assetTypeId:
+          type: string
+          format: uuid
+        businessObjectId:
+          type: string
+          format: uuid
+          description: "Opaque caller-supplied reference; workflow.business_objects FK is deferred (out of Sprint #1 scope)."
+        displayRef:
+          type: string
+        currentStatusCode:
+          type: string
+          maxLength: 100
+        currentOwnerCustomerId:
+          type: [string, "null"]
+          format: uuid
+    UpdateAssetInput:
+      type: object
+      properties:
+        displayRef:
+          type: string
+        currentOwnerCustomerId:
+          type: [string, "null"]
+          format: uuid

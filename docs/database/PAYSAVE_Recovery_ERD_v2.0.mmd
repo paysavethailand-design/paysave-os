@@ -1,0 +1,454 @@
+%% PAYSAVE OS Stage 2 logical ERD v2.0
+%% Status: Proposed — review only; no SQL/DDL is contained in this file.
+%% Entity names use SCHEMA_TABLE because Mermaid ER diagrams do not use PostgreSQL-qualified identifiers safely.
+%% Prefix mapping: COMM_* = communication.*, DOCUMENT_* = document_store.*; all other prefixes equal their PostgreSQL schema.
+%% PK markers are logical entity keys; physical partitioned PKs also include the partition key as specified in Database Design v2.0.
+erDiagram
+    TENANT_PARTNERS {
+        uuid id PK
+        string code UK
+    }
+    TENANT_PARTNER_SETTINGS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    TENANT_BRANCHES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    IAM_USERS {
+        uuid id PK
+        string auth_subject UK
+    }
+    IAM_MEMBERSHIPS {
+        uuid id PK
+        uuid partner_id FK
+        uuid user_id FK
+    }
+    IAM_ROLE_TEMPLATES {
+        uuid id PK
+    }
+    IAM_ROLES {
+        uuid id PK
+        uuid partner_id FK
+        uuid template_id FK
+    }
+    IAM_PERMISSIONS {
+        uuid id PK
+        string code UK
+    }
+    IAM_ROLE_PERMISSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid role_id FK
+        uuid permission_id FK
+    }
+    IAM_MEMBERSHIP_ROLES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid role_id FK
+    }
+    IAM_MEMBERSHIP_BRANCH_SCOPES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid branch_id FK
+    }
+
+    CRM_CUSTOMERS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    CRM_CUSTOMER_IDENTIFIERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    CRM_CUSTOMER_CONTACTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    CRM_CUSTOMER_ADDRESSES {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+
+    RECOVERY_CONTRACTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    RECOVERY_CONTRACT_BALANCE_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid contract_id FK
+    }
+    RECOVERY_CASE_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    RECOVERY_CASES {
+        uuid id PK
+        uuid partner_id FK
+        uuid branch_id FK
+        uuid customer_id FK
+        uuid contract_id FK
+        uuid status_id FK
+    }
+    RECOVERY_CASE_EXTERNAL_REFERENCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+    }
+    RECOVERY_CASE_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid from_status_id FK
+        uuid to_status_id FK
+    }
+    RECOVERY_CASE_TIMELINE_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+    }
+    RECOVERY_CASE_NOTES {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+    }
+    RECOVERY_TAGS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    RECOVERY_CASE_TAGS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid tag_id FK
+    }
+
+    WORKFORCE_AGENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid home_branch_id FK
+    }
+    WORKFORCE_TEAMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid branch_id FK
+    }
+    WORKFORCE_TEAM_MEMBERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid team_id FK
+        uuid agent_id FK
+    }
+    WORKFORCE_ASSIGNMENT_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    WORKFORCE_ASSIGNMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid agent_id FK
+        uuid team_id FK
+        uuid status_id FK
+    }
+    WORKFORCE_ASSIGNMENT_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid assignment_id FK
+    }
+    WORKFORCE_FIELD_VISITS {
+        uuid id PK
+        uuid partner_id FK
+        uuid assignment_id FK
+    }
+    WORKFORCE_FIELD_VISIT_OUTCOMES {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+    }
+    WORKFORCE_FIELD_LOCATION_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid agent_id FK
+    }
+
+    FINANCE_PAYMENT_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    FINANCE_PAYMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+        uuid status_id FK
+    }
+    FINANCE_PAYMENT_ALLOCATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid contract_id FK
+        uuid case_id FK
+    }
+    FINANCE_PAYMENT_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+    }
+    FINANCE_PAYMENT_REVERSALS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+    }
+    FINANCE_RECONCILIATION_BATCHES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    PERFORMANCE_KPI_DEFINITIONS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PERFORMANCE_KPI_DEFINITION_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_id FK
+    }
+    PERFORMANCE_KPI_TARGETS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+        uuid team_id FK
+    }
+    PERFORMANCE_KPI_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+        uuid case_id FK
+    }
+    PERFORMANCE_KPI_PERIOD_RESULTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+    }
+    PERFORMANCE_COMMISSION_PLANS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PERFORMANCE_COMMISSION_PLAN_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid plan_id FK
+    }
+    PERFORMANCE_COMMISSION_RUNS {
+        uuid id PK
+        uuid partner_id FK
+        uuid plan_version_id FK
+    }
+    PERFORMANCE_COMMISSION_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid run_id FK
+        uuid agent_id FK
+        uuid case_id FK
+        uuid payment_id FK
+    }
+    PERFORMANCE_COMMISSION_ADJUSTMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid commission_item_id FK
+    }
+
+    DOCUMENT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    DOCUMENT_ATTACHMENT_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_CASE_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_VISIT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_PAYMENT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_COMMISSION_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid commission_item_id FK
+        uuid attachment_id FK
+    }
+
+    COMM_NOTIFICATION_TEMPLATES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    COMM_NOTIFICATION_PREFERENCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+    }
+    COMM_NOTIFICATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid template_id FK
+    }
+    COMM_NOTIFICATION_RECIPIENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid notification_id FK
+        uuid membership_id FK
+    }
+    COMM_NOTIFICATION_DELIVERIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid notification_id FK
+        uuid recipient_id FK
+    }
+
+    AUDIT_AUDIT_EVENTS {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+    AUDIT_ENTITY_HISTORY {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+    AUDIT_DATA_ACCESS_EVENTS {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+
+    PLATFORM_OUTBOX_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PLATFORM_IDEMPOTENCY_KEYS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PLATFORM_PARTNER_INTEGRATIONS {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    TENANT_PARTNERS ||--o{ TENANT_PARTNER_SETTINGS : configures
+    TENANT_PARTNERS ||--o{ TENANT_BRANCHES : owns
+    IAM_USERS ||--o{ IAM_MEMBERSHIPS : joins
+    TENANT_PARTNERS ||--o{ IAM_MEMBERSHIPS : has
+    IAM_ROLE_TEMPLATES o|--o{ IAM_ROLES : seeds
+    TENANT_PARTNERS ||--o{ IAM_ROLES : owns
+    IAM_ROLES ||--o{ IAM_ROLE_PERMISSIONS : grants
+    IAM_PERMISSIONS ||--o{ IAM_ROLE_PERMISSIONS : included_in
+    IAM_MEMBERSHIPS ||--o{ IAM_MEMBERSHIP_ROLES : receives
+    IAM_ROLES ||--o{ IAM_MEMBERSHIP_ROLES : assigned_as
+    IAM_MEMBERSHIPS ||--o{ IAM_MEMBERSHIP_BRANCH_SCOPES : scoped_to
+    TENANT_BRANCHES ||--o{ IAM_MEMBERSHIP_BRANCH_SCOPES : permits
+
+    TENANT_PARTNERS ||--o{ CRM_CUSTOMERS : owns
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_IDENTIFIERS : identified_by
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_CONTACTS : contacted_via
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_ADDRESSES : located_at
+
+    CRM_CUSTOMERS ||--o{ RECOVERY_CONTRACTS : holds
+    RECOVERY_CONTRACTS ||--o{ RECOVERY_CONTRACT_BALANCE_HISTORY : snapshots
+    TENANT_PARTNERS ||--o{ RECOVERY_CASE_STATUSES : defines
+    CRM_CUSTOMERS ||--o{ RECOVERY_CASES : subject_of
+    RECOVERY_CONTRACTS o|--o{ RECOVERY_CASES : relates_to
+    TENANT_BRANCHES ||--o{ RECOVERY_CASES : scopes
+    RECOVERY_CASE_STATUSES ||--o{ RECOVERY_CASES : current_status
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_EXTERNAL_REFERENCES : maps
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_STATUS_HISTORY : transitions
+    RECOVERY_CASE_STATUSES ||--o{ RECOVERY_CASE_STATUS_HISTORY : status_ref
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_TIMELINE_EVENTS : timelines
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_NOTES : notes
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_TAGS : tagged
+    RECOVERY_TAGS ||--o{ RECOVERY_CASE_TAGS : classifies
+
+    IAM_MEMBERSHIPS ||--o| WORKFORCE_AGENTS : becomes
+    TENANT_BRANCHES ||--o{ WORKFORCE_AGENTS : homes
+    TENANT_BRANCHES ||--o{ WORKFORCE_TEAMS : owns
+    WORKFORCE_TEAMS ||--o{ WORKFORCE_TEAM_MEMBERS : contains
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_TEAM_MEMBERS : joins
+    RECOVERY_CASES ||--o{ WORKFORCE_ASSIGNMENTS : assigned
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_ASSIGNMENTS : receives
+    WORKFORCE_TEAMS o|--o{ WORKFORCE_ASSIGNMENTS : supports
+    WORKFORCE_ASSIGNMENT_STATUSES ||--o{ WORKFORCE_ASSIGNMENTS : current_status
+    WORKFORCE_ASSIGNMENTS ||--o{ WORKFORCE_ASSIGNMENT_STATUS_HISTORY : transitions
+    WORKFORCE_ASSIGNMENTS ||--o{ WORKFORCE_FIELD_VISITS : produces
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_FIELD_VISIT_OUTCOMES : records
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_FIELD_LOCATION_EVENTS : tracks
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_FIELD_LOCATION_EVENTS : emits
+
+    CRM_CUSTOMERS ||--o{ FINANCE_PAYMENTS : pays
+    FINANCE_PAYMENT_STATUSES ||--o{ FINANCE_PAYMENTS : current_status
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_ALLOCATIONS : allocates
+    RECOVERY_CONTRACTS ||--o{ FINANCE_PAYMENT_ALLOCATIONS : receives
+    RECOVERY_CASES o|--o{ FINANCE_PAYMENT_ALLOCATIONS : attributes
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_STATUS_HISTORY : transitions
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_REVERSALS : reverses
+    TENANT_PARTNERS ||--o{ FINANCE_RECONCILIATION_BATCHES : reconciles
+
+    PERFORMANCE_KPI_DEFINITIONS ||--o{ PERFORMANCE_KPI_DEFINITION_VERSIONS : versions
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_TARGETS : targets
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_EVENTS : measures
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_PERIOD_RESULTS : summarizes
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_KPI_TARGETS : assigned_target
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_KPI_EVENTS : earns_event
+    RECOVERY_CASES o|--o{ PERFORMANCE_KPI_EVENTS : source_case
+    PERFORMANCE_COMMISSION_PLANS ||--o{ PERFORMANCE_COMMISSION_PLAN_VERSIONS : versions
+    PERFORMANCE_COMMISSION_PLAN_VERSIONS ||--o{ PERFORMANCE_COMMISSION_RUNS : calculates
+    PERFORMANCE_COMMISSION_RUNS ||--o{ PERFORMANCE_COMMISSION_ITEMS : contains
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_COMMISSION_ITEMS : earns
+    PERFORMANCE_COMMISSION_ITEMS ||--o{ PERFORMANCE_COMMISSION_ADJUSTMENTS : adjusts
+
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_ATTACHMENT_VERSIONS : versions
+    RECOVERY_CASES ||--o{ DOCUMENT_CASE_ATTACHMENTS : has_evidence
+    WORKFORCE_FIELD_VISITS ||--o{ DOCUMENT_VISIT_ATTACHMENTS : has_evidence
+    FINANCE_PAYMENTS ||--o{ DOCUMENT_PAYMENT_ATTACHMENTS : has_evidence
+    PERFORMANCE_COMMISSION_ITEMS ||--o{ DOCUMENT_COMMISSION_ATTACHMENTS : has_evidence
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_CASE_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_VISIT_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_PAYMENT_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_COMMISSION_ATTACHMENTS : linked
+
+    COMM_NOTIFICATION_TEMPLATES ||--o{ COMM_NOTIFICATIONS : renders
+    IAM_MEMBERSHIPS ||--o{ COMM_NOTIFICATION_PREFERENCES : prefers
+    COMM_NOTIFICATIONS ||--o{ COMM_NOTIFICATION_RECIPIENTS : addresses
+    IAM_MEMBERSHIPS o|--o{ COMM_NOTIFICATION_RECIPIENTS : receives
+    COMM_NOTIFICATIONS ||--o{ COMM_NOTIFICATION_DELIVERIES : attempts
+    COMM_NOTIFICATION_RECIPIENTS ||--o{ COMM_NOTIFICATION_DELIVERIES : delivery_for
+
+    TENANT_PARTNERS ||--o{ PLATFORM_OUTBOX_EVENTS : emits
+    TENANT_PARTNERS ||--o{ PLATFORM_IDEMPOTENCY_KEYS : guards
+    TENANT_PARTNERS ||--o{ PLATFORM_PARTNER_INTEGRATIONS : configures

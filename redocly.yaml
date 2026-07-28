@@ -1,0 +1,16 @@
+extends:
+  - recommended
+
+apis:
+  paysave@v1:
+    root: docs/api/openapi.yaml
+  recovery-core@v1:
+    root: docs/api/openapi-recovery-core.yaml
+
+rules:
+  no-unresolved-refs: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-4xx-response: error
+  security-defined: error
+  no-unused-components: warn

@@ -1,0 +1,20 @@
+# This file instructs Redocly's linter to ignore the rules contained for specific parts of your API.
+# See https://redocly.com/docs/cli/ for more information.
+# Release-governance exception: these operations intentionally expose 501-only contracts because
+# the approved M001-M016 schema cannot support their required atomic multi-write/delete behavior.
+# Exact pointers preserve operation-2xx-response enforcement for every other current or future operation.
+docs/api/openapi.yaml:
+  operation-2xx-response:
+    - "#/paths/~1roles~1{roleId}~1permissions~1{permissionId}/delete/responses"
+docs/api/openapi-recovery-core.yaml:
+  operation-2xx-response:
+    - "#/paths/~1recovery~1cases~1{caseId}~1close/post/responses"
+    - "#/paths/~1recovery~1cases~1{caseId}~1reopen/post/responses"
+    - "#/paths/~1recovery~1assignments~1{assignmentId}~1reassign/post/responses"
+    - "#/paths/~1recovery~1assignments~1{assignmentId}~1accept/post/responses"
+    - "#/paths/~1recovery~1assignments~1{assignmentId}~1reject/post/responses"
+    - "#/paths/~1recovery~1assignments~1{assignmentId}~1complete/post/responses"
+    - "#/paths/~1recovery~1workflow~1transitions/post/responses"
+    - "#/paths/~1recovery~1promises-to-pay~1{promiseId}~1fulfill/post/responses"
+    - "#/paths/~1recovery~1promises-to-pay~1{promiseId}~1broken/post/responses"
+    - "#/paths/~1recovery~1promises-to-pay~1{promiseId}~1cancel/post/responses"

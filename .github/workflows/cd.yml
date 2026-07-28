@@ -1,0 +1,96 @@
+name: PAYSAVE OS CD Evidence Promotion (No Deployment)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: "Successful CI workflow run ID containing paysave-os-release-package"
+        required: true
+        type: string
+      target_environment:
+        description: "Environment approval gate to evaluate"
+        required: true
+        type: choice
+        options: [development, staging, production]
+      expected_package_sha256:
+        description: "Expected SHA-256 for the release package"
+        required: true
+        type: string
+      release_version:
+        description: "Expected release version"
+        required: true
+        type: string
+      approval_ticket:
+        description: "Change/CTO review ticket reference"
+        required: true
+        type: string
+      acknowledge_no_deployment:
+        description: "I understand this workflow records evidence and does not deploy"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: cd-evidence-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  DEPLOYMENT_ENABLED: "false"
+
+jobs:
+  validate-package:
+    name: Validate immutable package
+    if: inputs.acknowledge_no_deployment == true
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.ci_run_id }}
+          name: paysave-os-release-package
+          path: candidate
+      - id: package
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          package="$(find candidate -maxdepth 1 -type f -name '*.tar.gz' -print -quit)"
+          test -n "$package"
+          actual="$(sha256sum "$package" | cut -d' ' -f1)"
+          test "$actual" = "${{ inputs.expected_package_sha256 }}"
+          mkdir extracted
+          tar -xzf "$package" -C extracted
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$actual" >> "$GITHUB_OUTPUT"
+      - run: node scripts/ci/validate-deployment-manifest.mjs extracted/deployment-manifest.json --require-eligible
+      - env:
+          EXPECTED_VERSION: ${{ inputs.release_version }}
+        run: node -e "const m=require('./extracted/deployment-manifest.json'); if(m.releaseVersion!==process.env.EXPECTED_VERSION||m.promotion.deploy!==false) process.exit(1)"
+
+  environment-approval:
+    name: ${{ inputs.target_environment }} evidence gate
+    needs: validate-package
+    runs-on: ubuntu-24.04
+    environment:
+      name: ${{ inputs.target_environment }}
+    steps:
+      - shell: bash
+        env:
+          APPROVAL_TICKET: ${{ inputs.approval_ticket }}
+          PACKAGE_SHA256: ${{ inputs.expected_package_sha256 }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+        run: |
+          mkdir -p promotion
+          jq -n             --arg environment "$TARGET_ENVIRONMENT"             --arg version "$RELEASE_VERSION"             --arg digest "$PACKAGE_SHA256"             --arg ticket "$APPROVAL_TICKET"             --arg actor "$GITHUB_ACTOR"             --arg run "$GITHUB_RUN_ID"             '{schemaVersion:1, environment:$environment, releaseVersion:$version, packageSha256:$digest, approvalTicket:$ticket, actor:$actor, workflowRunId:$run, deploy:false, status:"EVIDENCE_GATE_RECORDED_ONLY"}'             > promotion/promotion-record.json
+          jq -e '.deploy == false and .status == "EVIDENCE_GATE_RECORDED_ONLY"' promotion/promotion-record.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: promotion-record-${{ inputs.target_environment }}-${{ github.run_id }}
+          path: promotion/promotion-record.json
+          if-no-files-found: error
+          retention-days: 365

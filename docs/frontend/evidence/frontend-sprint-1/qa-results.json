@@ -1,0 +1,63 @@
+{
+  "baseURL": "http://127.0.0.1:3100",
+  "generatedAt": "2026-07-22T05:33:46.810Z",
+  "pages": [
+    {
+      "name": "login-desktop",
+      "url": "http://127.0.0.1:3100/login",
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "seriousViolations": []
+    },
+    {
+      "name": "executive-desktop",
+      "url": "http://127.0.0.1:3100/dashboard/executive",
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "seriousViolations": []
+    },
+    {
+      "name": "partner-desktop",
+      "url": "http://127.0.0.1:3100/dashboard/partner",
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "seriousViolations": []
+    },
+    {
+      "name": "admin-desktop",
+      "url": "http://127.0.0.1:3100/dashboard/admin",
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "seriousViolations": []
+    },
+    {
+      "name": "field-desktop",
+      "url": "http://127.0.0.1:3100/dashboard/field",
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "seriousViolations": []
+    },
+    {
+      "name": "executive-mobile",
+      "url": "http://127.0.0.1:3100/dashboard/executive",
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390
+      },
+      "seriousViolations": []
+    }
+  ],
+  "externalRequests": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

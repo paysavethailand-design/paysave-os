@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/tokens.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@paysave/ui/components",
+    "utils": "@paysave/ui/lib/cn",
+    "ui": "@paysave/ui/components",
+    "lib": "@paysave/ui/lib",
+    "hooks": "@paysave/ui/hooks"
+  }
+}

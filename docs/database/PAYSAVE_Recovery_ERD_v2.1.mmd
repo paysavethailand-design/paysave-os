@@ -1,0 +1,1256 @@
+%% PAYSAVE OS Stage 2.6 logical ERD v2.1
+%% Status: Accepted and Frozen — Database Gate v2.1 / Architecture Freeze v1.0; no SQL/DDL/Migration.
+%% Entity names use SCHEMA_TABLE because Mermaid ER diagrams do not use PostgreSQL-qualified identifiers safely.
+%% Prefix mapping: COMM_* = communication.*, DOCUMENT_* = document_store.*; all other prefixes equal their PostgreSQL schema.
+%% Logical design: 161 entities = 67 baseline + 94 P0 additions.
+erDiagram
+    TENANT_PARTNERS {
+        uuid id PK
+        string code UK
+    }
+    TENANT_PARTNER_SETTINGS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    TENANT_BRANCHES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    IAM_USERS {
+        uuid id PK
+        string auth_subject UK
+    }
+    IAM_MEMBERSHIPS {
+        uuid id PK
+        uuid partner_id FK
+        uuid user_id FK
+    }
+    IAM_ROLE_TEMPLATES {
+        uuid id PK
+    }
+    IAM_ROLES {
+        uuid id PK
+        uuid partner_id FK
+        uuid template_id FK
+    }
+    IAM_PERMISSIONS {
+        uuid id PK
+        string code UK
+    }
+    IAM_ROLE_PERMISSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid role_id FK
+        uuid permission_id FK
+    }
+    IAM_MEMBERSHIP_ROLES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid role_id FK
+    }
+    IAM_MEMBERSHIP_BRANCH_SCOPES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid branch_id FK
+    }
+
+    CRM_CUSTOMERS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    CRM_CUSTOMER_IDENTIFIERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    CRM_CUSTOMER_CONTACTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    CRM_CUSTOMER_ADDRESSES {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+
+    RECOVERY_CONTRACTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+    }
+    RECOVERY_CONTRACT_BALANCE_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid contract_id FK
+    }
+    RECOVERY_CASE_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    RECOVERY_CASES {
+        uuid id PK
+        uuid partner_id FK
+        uuid branch_id FK
+        uuid customer_id FK
+        uuid contract_id FK
+        uuid status_id FK
+        uuid business_object_id FK
+    }
+    RECOVERY_CASE_EXTERNAL_REFERENCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+    }
+    RECOVERY_CASE_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid from_status_id FK
+        uuid to_status_id FK
+    }
+    RECOVERY_CASE_TIMELINE_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid event_version_id FK
+        uuid correlation_id
+        uuid causation_id
+    }
+    RECOVERY_CASE_NOTES {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+    }
+    RECOVERY_TAGS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    RECOVERY_CASE_TAGS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid tag_id FK
+    }
+
+    WORKFORCE_AGENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+        uuid home_branch_id FK
+    }
+    WORKFORCE_TEAMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid branch_id FK
+    }
+    WORKFORCE_TEAM_MEMBERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid team_id FK
+        uuid agent_id FK
+    }
+    WORKFORCE_ASSIGNMENT_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    WORKFORCE_ASSIGNMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid agent_id FK
+        uuid team_id FK
+        uuid status_id FK
+        uuid business_object_id FK
+    }
+    WORKFORCE_ASSIGNMENT_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid assignment_id FK
+    }
+    WORKFORCE_FIELD_VISITS {
+        uuid id PK
+        uuid partner_id FK
+        uuid assignment_id FK
+        uuid business_object_id FK
+    }
+    WORKFORCE_FIELD_VISIT_OUTCOMES {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+    }
+    WORKFORCE_FIELD_LOCATION_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid agent_id FK
+        uuid tracking_session_id FK
+    }
+
+    FINANCE_PAYMENT_STATUSES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    FINANCE_PAYMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid customer_id FK
+        uuid status_id FK
+        uuid business_object_id FK
+        uuid payment_method_item_id FK
+        uuid channel_item_id FK
+    }
+    FINANCE_PAYMENT_ALLOCATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid contract_id FK
+        uuid case_id FK
+    }
+    FINANCE_PAYMENT_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+    }
+    FINANCE_PAYMENT_REVERSALS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+    FINANCE_RECONCILIATION_BATCHES {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+
+    PERFORMANCE_KPI_DEFINITIONS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PERFORMANCE_KPI_DEFINITION_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_id FK
+    }
+    PERFORMANCE_KPI_TARGETS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+        uuid team_id FK
+    }
+    PERFORMANCE_KPI_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+        uuid case_id FK
+    }
+    PERFORMANCE_KPI_PERIOD_RESULTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid agent_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+    PERFORMANCE_COMMISSION_PLANS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PERFORMANCE_COMMISSION_PLAN_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid plan_id FK
+    }
+    PERFORMANCE_COMMISSION_RUNS {
+        uuid id PK
+        uuid partner_id FK
+        uuid plan_version_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+    PERFORMANCE_COMMISSION_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid run_id FK
+        uuid agent_id FK
+        uuid case_id FK
+        uuid payment_id FK
+    }
+    PERFORMANCE_COMMISSION_ADJUSTMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid commission_item_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+
+    DOCUMENT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+    }
+    DOCUMENT_ATTACHMENT_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_CASE_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_VISIT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_PAYMENT_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid attachment_id FK
+    }
+    DOCUMENT_COMMISSION_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid commission_item_id FK
+        uuid attachment_id FK
+    }
+
+    COMM_NOTIFICATION_TEMPLATES {
+        uuid id PK
+        uuid partner_id FK
+    }
+    COMM_NOTIFICATION_PREFERENCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid membership_id FK
+    }
+    COMM_NOTIFICATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid template_id FK
+        uuid event_version_id FK
+        uuid correlation_id
+        uuid causation_id
+    }
+    COMM_NOTIFICATION_RECIPIENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid notification_id FK
+        uuid membership_id FK
+    }
+    COMM_NOTIFICATION_DELIVERIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid notification_id FK
+        uuid recipient_id FK
+    }
+
+    AUDIT_AUDIT_EVENTS {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+    AUDIT_ENTITY_HISTORY {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+    AUDIT_DATA_ACCESS_EVENTS {
+        uuid id PK
+        uuid partner_id
+        uuid actor_user_id
+    }
+
+    PLATFORM_OUTBOX_EVENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid event_version_id FK
+        uuid correlation_id
+        uuid causation_id
+    }
+    PLATFORM_IDEMPOTENCY_KEYS {
+        uuid id PK
+        uuid partner_id FK
+    }
+    PLATFORM_PARTNER_INTEGRATIONS {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+
+    IAM_PERMISSION_SCOPES {
+        uuid id PK
+        uuid partner_id FK
+        uuid role_permission_id FK
+        uuid scope_ref_id FK
+    }
+
+    IAM_SEPARATION_OF_DUTY_RULES {
+        uuid id PK
+        uuid partner_id FK
+        uuid maker_permission_id FK
+        uuid checker_permission_id FK
+    }
+
+    WORKFORCE_AGENT_DEVICES {
+        uuid id PK
+        uuid partner_id FK
+        uuid agent_id FK
+    }
+
+    WORKFORCE_TRACKING_SESSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid agent_id FK
+        uuid device_id FK
+    }
+
+    WORKFORCE_GEOFENCES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    WORKFORCE_LOCATION_ANOMALIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid tracking_session_id FK
+        uuid location_event_id FK
+    }
+
+    WORKFORCE_ASSIGNMENT_HANDOFFS {
+        uuid id PK
+        uuid partner_id FK
+        uuid assignment_id FK
+        uuid from_agent_id FK
+        uuid to_agent_id FK
+        uuid actor_user_id FK
+    }
+
+    WORKFORCE_VISIT_PARTICIPANTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid customer_id FK
+        uuid membership_id FK
+    }
+
+    WORKFORCE_VISIT_CHECKLIST_RESPONSES {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+    }
+
+    WORKFORCE_CONTACT_ATTEMPTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid visit_id FK
+        uuid customer_contact_id FK
+        uuid actor_membership_id FK
+    }
+
+    WORKFORCE_PROMISES_TO_PAY {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid visit_id FK
+        uuid customer_id FK
+    }
+
+    WORKFORCE_PROMISE_TO_PAY_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid promise_id FK
+    }
+
+    FINANCE_PROVIDER_TRANSACTIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid integration_id FK
+    }
+
+    FINANCE_RECONCILIATION_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid batch_id FK
+        uuid payment_id FK
+        uuid provider_transaction_id FK
+    }
+
+    FINANCE_PAYMENT_DISPUTES {
+        uuid id PK
+        uuid partner_id FK
+        uuid payment_id FK
+        uuid provider_transaction_id FK
+    }
+
+    PERFORMANCE_COMMISSION_PAYOUTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid commission_run_id FK
+        uuid business_object_id FK
+        uuid approval_request_id FK
+    }
+
+    PERFORMANCE_COMMISSION_PAYOUT_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid payout_id FK
+        uuid commission_item_id FK
+        uuid agent_id FK
+    }
+
+    PERFORMANCE_COMMISSION_PAYOUT_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid payout_id FK
+    }
+
+    DOCUMENT_ATTACHMENT_SCAN_RESULTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid attachment_version_id FK
+    }
+
+    DOCUMENT_LEGAL_HOLDS {
+        uuid id PK
+        uuid partner_id FK
+        uuid approved_request_id FK
+    }
+
+    DOCUMENT_LEGAL_HOLD_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid legal_hold_id FK
+        uuid attachment_id FK
+    }
+
+    DOCUMENT_ASSET_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid attachment_id FK
+    }
+
+    MASTER_DATA_CATALOGS {
+        uuid id PK
+        uuid owner_partner_id FK
+        uuid business_object_id FK
+    }
+
+    MASTER_DATA_CATALOG_VERSIONS {
+        uuid id PK
+        uuid owner_partner_id FK
+        uuid catalog_id FK
+    }
+
+    MASTER_DATA_CATALOG_ITEMS {
+        uuid id PK
+        uuid owner_partner_id FK
+        uuid catalog_version_id FK
+    }
+
+    MASTER_DATA_CATALOG_ITEM_LOCALIZATIONS {
+        uuid id PK
+        uuid owner_partner_id FK
+        uuid catalog_item_id FK
+    }
+
+    MASTER_DATA_EXTERNAL_MAPPINGS {
+        uuid id PK
+        uuid partner_id FK
+        uuid catalog_item_id FK
+        uuid integration_id FK
+    }
+
+    WORKFLOW_BUSINESS_OBJECTS {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    WORKFLOW_DEFINITIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+    }
+
+    WORKFLOW_DEFINITION_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_id FK
+    }
+
+    WORKFLOW_STATES {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+    }
+
+    WORKFLOW_TRANSITIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid from_state_id FK
+        uuid to_state_id FK
+    }
+
+    WORKFLOW_INSTANCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid business_object_id FK
+        uuid current_state_id FK
+    }
+
+    WORKFLOW_WORK_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid instance_id FK
+        uuid state_id FK
+    }
+
+    WORKFLOW_WORK_ITEM_ASSIGNMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid work_item_id FK
+        uuid membership_id FK
+        uuid role_id FK
+    }
+
+    WORKFLOW_INSTANCE_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid instance_id FK
+        uuid work_item_id FK
+        uuid from_state_id FK
+        uuid to_state_id FK
+        uuid actor_user_id FK
+    }
+
+    APPROVAL_POLICIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+    }
+
+    APPROVAL_POLICY_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid policy_id FK
+    }
+
+    APPROVAL_POLICY_STEPS {
+        uuid id PK
+        uuid partner_id FK
+        uuid policy_version_id FK
+    }
+
+    APPROVAL_REQUESTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid policy_version_id FK
+        uuid business_object_id FK
+        uuid workflow_instance_id FK
+        uuid subject_version_ref
+        uuid subject_version_hash
+    }
+
+    APPROVAL_REQUEST_STEPS {
+        uuid id PK
+        uuid partner_id FK
+        uuid request_id FK
+        uuid policy_step_id FK
+    }
+
+    APPROVAL_DECISIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid request_step_id FK
+        uuid actor_membership_id FK
+    }
+
+    APPROVAL_DELEGATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid from_membership_id FK
+        uuid to_membership_id FK
+        uuid permission_id FK
+        uuid approved_request_id FK
+    }
+
+    SLA_POLICIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+    }
+
+    SLA_POLICY_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid policy_id FK
+    }
+
+    SLA_TARGETS {
+        uuid id PK
+        uuid partner_id FK
+        uuid policy_version_id FK
+    }
+
+    SLA_INSTANCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid target_id FK
+        uuid business_object_id FK
+        uuid workflow_instance_id FK
+    }
+
+    SLA_PAUSES {
+        uuid id PK
+        uuid partner_id FK
+        uuid sla_instance_id FK
+        uuid actor_user_id FK
+    }
+
+    SLA_BREACHES {
+        uuid id PK
+        uuid partner_id FK
+        uuid sla_instance_id FK
+    }
+
+    SLA_ESCALATIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid sla_instance_id FK
+        uuid workflow_instance_id FK
+        uuid notification_id FK
+    }
+
+    KNOWLEDGE_SPACES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    KNOWLEDGE_ARTICLES {
+        uuid id PK
+        uuid partner_id FK
+        uuid space_id FK
+        uuid business_object_id FK
+    }
+
+    KNOWLEDGE_ARTICLE_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid article_id FK
+    }
+
+    KNOWLEDGE_TAGS {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    KNOWLEDGE_ARTICLE_TAGS {
+        uuid id PK
+        uuid partner_id FK
+        uuid article_id FK
+        uuid tag_id FK
+    }
+
+    KNOWLEDGE_ARTICLE_ATTACHMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid article_version_id FK
+        uuid attachment_id FK
+    }
+
+    AI_MODELS {
+        uuid id PK
+    }
+
+    AI_MODEL_VERSIONS {
+        uuid id PK
+        uuid model_id FK
+    }
+
+    AI_PROMPT_TEMPLATES {
+        uuid id PK
+        uuid partner_id FK
+        uuid business_object_id FK
+    }
+
+    AI_PROMPT_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid prompt_template_id FK
+    }
+
+    AI_REQUESTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid model_version_id FK
+        uuid prompt_version_id FK
+        uuid business_object_id FK
+    }
+
+    AI_REQUEST_INPUTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid request_id FK
+        uuid business_object_id FK
+        uuid attachment_version_id FK
+        uuid article_version_id FK
+    }
+
+    AI_RESULTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid request_id FK
+        uuid business_object_id FK
+    }
+
+    AI_HUMAN_REVIEWS {
+        uuid id PK
+        uuid partner_id FK
+        uuid result_id FK
+        uuid reviewer_membership_id FK
+        uuid approval_request_id FK
+    }
+
+    AI_FEEDBACK {
+        uuid id PK
+        uuid partner_id FK
+        uuid result_id FK
+        uuid membership_id FK
+    }
+
+    REPORT_DEFINITIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid owner_membership_id FK
+        uuid business_object_id FK
+    }
+
+    REPORT_DEFINITION_VERSIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_id FK
+    }
+
+    REPORT_RUNS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid business_object_id FK
+    }
+
+    REPORT_RUN_SOURCES {
+        uuid id PK
+        uuid partner_id FK
+        uuid run_id FK
+        uuid business_object_id FK
+    }
+
+    REPORT_ARTIFACTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid run_id FK
+        uuid attachment_id FK
+    }
+
+    REPORT_SUBSCRIPTIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid definition_version_id FK
+        uuid membership_id FK
+    }
+
+    REPORT_SNAPSHOTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid run_id FK
+    }
+
+    ASSET_ASSET_TYPES {
+        uuid id PK
+        uuid partner_id FK
+    }
+
+    ASSET_ASSETS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_type_id FK
+        uuid business_object_id FK
+        uuid current_owner_customer_id FK
+    }
+
+    ASSET_ASSET_IDENTIFIERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+    }
+
+    ASSET_ASSET_OWNERSHIP_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid customer_id FK
+    }
+
+    ASSET_CASE_ASSETS {
+        uuid id PK
+        uuid partner_id FK
+        uuid case_id FK
+        uuid asset_id FK
+    }
+
+    ASSET_ASSET_INSPECTIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid visit_id FK
+    }
+
+    ASSET_ASSET_STATUS_HISTORY {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+    }
+
+    WAREHOUSE_FACILITIES {
+        uuid id PK
+        uuid partner_id FK
+        uuid branch_id FK
+    }
+
+    WAREHOUSE_ZONES {
+        uuid id PK
+        uuid partner_id FK
+        uuid facility_id FK
+    }
+
+    WAREHOUSE_BINS {
+        uuid id PK
+        uuid partner_id FK
+        uuid zone_id FK
+    }
+
+    WAREHOUSE_RECEIPTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid facility_id FK
+        uuid case_id FK
+        uuid business_object_id FK
+    }
+
+    WAREHOUSE_RECEIPT_ITEMS {
+        uuid id PK
+        uuid partner_id FK
+        uuid receipt_id FK
+        uuid asset_id FK
+    }
+
+    WAREHOUSE_STOCK_POSITIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid bin_id FK
+    }
+
+    WAREHOUSE_MOVEMENTS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid from_bin_id FK
+        uuid to_bin_id FK
+        uuid actor_membership_id FK
+    }
+
+    WAREHOUSE_HANDOVERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid from_membership_id FK
+        uuid to_membership_id FK
+        uuid approval_request_id FK
+    }
+
+    WAREHOUSE_DISPOSITION_ORDERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid asset_id FK
+        uuid approval_request_id FK
+    }
+
+    EVENT_CATALOG_EVENT_DEFINITIONS {
+        uuid id PK
+    }
+
+    EVENT_CATALOG_EVENT_VERSIONS {
+        uuid id PK
+        uuid event_definition_id FK
+        uuid payload_schema_id FK
+    }
+
+    EVENT_CATALOG_PAYLOAD_SCHEMAS {
+        uuid id PK
+    }
+
+    EVENT_CATALOG_PUBLISHERS {
+        uuid id PK
+        uuid partner_id FK
+        uuid event_definition_id FK
+        uuid integration_id FK
+    }
+
+    EVENT_CATALOG_SUBSCRIPTIONS {
+        uuid id PK
+        uuid partner_id FK
+        uuid event_definition_id FK
+    }
+
+    EVENT_CATALOG_COMPATIBILITY_REVIEWS {
+        uuid id PK
+        uuid event_version_id FK
+        uuid previous_version_id FK
+        uuid approval_request_id FK
+    }
+
+    TENANT_PARTNERS ||--o{ TENANT_PARTNER_SETTINGS : configures
+    TENANT_PARTNERS ||--o{ TENANT_BRANCHES : owns
+    IAM_USERS ||--o{ IAM_MEMBERSHIPS : joins
+    TENANT_PARTNERS ||--o{ IAM_MEMBERSHIPS : has
+    IAM_ROLE_TEMPLATES o|--o{ IAM_ROLES : seeds
+    TENANT_PARTNERS ||--o{ IAM_ROLES : owns
+    IAM_ROLES ||--o{ IAM_ROLE_PERMISSIONS : grants
+    IAM_PERMISSIONS ||--o{ IAM_ROLE_PERMISSIONS : included_in
+    IAM_MEMBERSHIPS ||--o{ IAM_MEMBERSHIP_ROLES : receives
+    IAM_ROLES ||--o{ IAM_MEMBERSHIP_ROLES : assigned_as
+    IAM_MEMBERSHIPS ||--o{ IAM_MEMBERSHIP_BRANCH_SCOPES : scoped_to
+    TENANT_BRANCHES ||--o{ IAM_MEMBERSHIP_BRANCH_SCOPES : permits
+
+    TENANT_PARTNERS ||--o{ CRM_CUSTOMERS : owns
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_IDENTIFIERS : identified_by
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_CONTACTS : contacted_via
+    CRM_CUSTOMERS ||--o{ CRM_CUSTOMER_ADDRESSES : located_at
+
+    CRM_CUSTOMERS ||--o{ RECOVERY_CONTRACTS : holds
+    RECOVERY_CONTRACTS ||--o{ RECOVERY_CONTRACT_BALANCE_HISTORY : snapshots
+    TENANT_PARTNERS ||--o{ RECOVERY_CASE_STATUSES : defines
+    CRM_CUSTOMERS ||--o{ RECOVERY_CASES : subject_of
+    RECOVERY_CONTRACTS o|--o{ RECOVERY_CASES : relates_to
+    TENANT_BRANCHES ||--o{ RECOVERY_CASES : scopes
+    RECOVERY_CASE_STATUSES ||--o{ RECOVERY_CASES : current_status
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_EXTERNAL_REFERENCES : maps
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_STATUS_HISTORY : transitions
+    RECOVERY_CASE_STATUSES ||--o{ RECOVERY_CASE_STATUS_HISTORY : status_ref
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_TIMELINE_EVENTS : timelines
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_NOTES : notes
+    RECOVERY_CASES ||--o{ RECOVERY_CASE_TAGS : tagged
+    RECOVERY_TAGS ||--o{ RECOVERY_CASE_TAGS : classifies
+
+    IAM_MEMBERSHIPS ||--o| WORKFORCE_AGENTS : becomes
+    TENANT_BRANCHES ||--o{ WORKFORCE_AGENTS : homes
+    TENANT_BRANCHES ||--o{ WORKFORCE_TEAMS : owns
+    WORKFORCE_TEAMS ||--o{ WORKFORCE_TEAM_MEMBERS : contains
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_TEAM_MEMBERS : joins
+    RECOVERY_CASES ||--o{ WORKFORCE_ASSIGNMENTS : assigned
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_ASSIGNMENTS : receives
+    WORKFORCE_TEAMS o|--o{ WORKFORCE_ASSIGNMENTS : supports
+    WORKFORCE_ASSIGNMENT_STATUSES ||--o{ WORKFORCE_ASSIGNMENTS : current_status
+    WORKFORCE_ASSIGNMENTS ||--o{ WORKFORCE_ASSIGNMENT_STATUS_HISTORY : transitions
+    WORKFORCE_ASSIGNMENTS ||--o{ WORKFORCE_FIELD_VISITS : produces
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_FIELD_VISIT_OUTCOMES : records
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_FIELD_LOCATION_EVENTS : tracks
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_FIELD_LOCATION_EVENTS : emits
+
+    CRM_CUSTOMERS ||--o{ FINANCE_PAYMENTS : pays
+    FINANCE_PAYMENT_STATUSES ||--o{ FINANCE_PAYMENTS : current_status
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_ALLOCATIONS : allocates
+    RECOVERY_CONTRACTS ||--o{ FINANCE_PAYMENT_ALLOCATIONS : receives
+    RECOVERY_CASES o|--o{ FINANCE_PAYMENT_ALLOCATIONS : attributes
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_STATUS_HISTORY : transitions
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_REVERSALS : reverses
+    TENANT_PARTNERS ||--o{ FINANCE_RECONCILIATION_BATCHES : reconciles
+
+    PERFORMANCE_KPI_DEFINITIONS ||--o{ PERFORMANCE_KPI_DEFINITION_VERSIONS : versions
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_TARGETS : targets
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_EVENTS : measures
+    PERFORMANCE_KPI_DEFINITION_VERSIONS ||--o{ PERFORMANCE_KPI_PERIOD_RESULTS : summarizes
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_KPI_TARGETS : assigned_target
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_KPI_EVENTS : earns_event
+    RECOVERY_CASES o|--o{ PERFORMANCE_KPI_EVENTS : source_case
+    PERFORMANCE_COMMISSION_PLANS ||--o{ PERFORMANCE_COMMISSION_PLAN_VERSIONS : versions
+    PERFORMANCE_COMMISSION_PLAN_VERSIONS ||--o{ PERFORMANCE_COMMISSION_RUNS : calculates
+    PERFORMANCE_COMMISSION_RUNS ||--o{ PERFORMANCE_COMMISSION_ITEMS : contains
+    WORKFORCE_AGENTS ||--o{ PERFORMANCE_COMMISSION_ITEMS : earns
+    PERFORMANCE_COMMISSION_ITEMS ||--o{ PERFORMANCE_COMMISSION_ADJUSTMENTS : adjusts
+
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_ATTACHMENT_VERSIONS : versions
+    RECOVERY_CASES ||--o{ DOCUMENT_CASE_ATTACHMENTS : has_evidence
+    WORKFORCE_FIELD_VISITS ||--o{ DOCUMENT_VISIT_ATTACHMENTS : has_evidence
+    FINANCE_PAYMENTS ||--o{ DOCUMENT_PAYMENT_ATTACHMENTS : has_evidence
+    PERFORMANCE_COMMISSION_ITEMS ||--o{ DOCUMENT_COMMISSION_ATTACHMENTS : has_evidence
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_CASE_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_VISIT_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_PAYMENT_ATTACHMENTS : linked
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_COMMISSION_ATTACHMENTS : linked
+
+    COMM_NOTIFICATION_TEMPLATES ||--o{ COMM_NOTIFICATIONS : renders
+    IAM_MEMBERSHIPS ||--o{ COMM_NOTIFICATION_PREFERENCES : prefers
+    COMM_NOTIFICATIONS ||--o{ COMM_NOTIFICATION_RECIPIENTS : addresses
+    IAM_MEMBERSHIPS o|--o{ COMM_NOTIFICATION_RECIPIENTS : receives
+    COMM_NOTIFICATIONS ||--o{ COMM_NOTIFICATION_DELIVERIES : attempts
+    COMM_NOTIFICATION_RECIPIENTS ||--o{ COMM_NOTIFICATION_DELIVERIES : delivery_for
+
+    TENANT_PARTNERS ||--o{ PLATFORM_OUTBOX_EVENTS : emits
+    TENANT_PARTNERS ||--o{ PLATFORM_IDEMPOTENCY_KEYS : guards
+    TENANT_PARTNERS ||--o{ PLATFORM_PARTNER_INTEGRATIONS : configures
+
+%% Stage 2.6 P0 relationships
+    WORKFLOW_BUSINESS_OBJECTS ||--o| MASTER_DATA_CATALOGS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| WORKFLOW_DEFINITIONS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| APPROVAL_POLICIES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| SLA_POLICIES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| AI_PROMPT_TEMPLATES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| KNOWLEDGE_ARTICLES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| AI_RESULTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| REPORT_DEFINITIONS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| REPORT_RUNS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| ASSET_ASSETS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| WAREHOUSE_RECEIPTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| PERFORMANCE_COMMISSION_PAYOUTS : identifies
+    APPROVAL_REQUESTS o|--o{ PERFORMANCE_COMMISSION_PAYOUTS : authorizes
+    WORKFLOW_BUSINESS_OBJECTS ||--o| RECOVERY_CASES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| WORKFORCE_ASSIGNMENTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| WORKFORCE_FIELD_VISITS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| FINANCE_PAYMENTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| FINANCE_PAYMENT_REVERSALS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| FINANCE_RECONCILIATION_BATCHES : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| PERFORMANCE_KPI_PERIOD_RESULTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| PERFORMANCE_COMMISSION_RUNS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| PERFORMANCE_COMMISSION_ADJUSTMENTS : identifies
+    WORKFLOW_BUSINESS_OBJECTS ||--o| DOCUMENT_ATTACHMENTS : identifies
+    WORKFORCE_TRACKING_SESSIONS ||--o{ WORKFORCE_FIELD_LOCATION_EVENTS : contains
+    APPROVAL_REQUESTS o|--o{ FINANCE_PAYMENT_REVERSALS : authorizes
+    APPROVAL_REQUESTS o|--o{ FINANCE_RECONCILIATION_BATCHES : authorizes
+    APPROVAL_REQUESTS o|--o{ PERFORMANCE_KPI_PERIOD_RESULTS : authorizes
+    APPROVAL_REQUESTS o|--o{ PERFORMANCE_COMMISSION_RUNS : authorizes
+    APPROVAL_REQUESTS o|--o{ PERFORMANCE_COMMISSION_ADJUSTMENTS : authorizes
+    MASTER_DATA_CATALOG_ITEMS o|--o{ FINANCE_PAYMENTS : classifies
+    EVENT_CATALOG_EVENT_VERSIONS ||--o{ COMM_NOTIFICATIONS : triggers
+    EVENT_CATALOG_EVENT_VERSIONS ||--o{ RECOVERY_CASE_TIMELINE_EVENTS : projects
+    IAM_ROLE_PERMISSIONS ||--o{ IAM_PERMISSION_SCOPES : scopes
+    IAM_PERMISSIONS ||--o{ IAM_SEPARATION_OF_DUTY_RULES : guards
+    WORKFORCE_AGENTS ||--o{ WORKFORCE_AGENT_DEVICES : uses
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_TRACKING_SESSIONS : bounds
+    WORKFORCE_AGENT_DEVICES ||--o{ WORKFORCE_TRACKING_SESSIONS : originates
+    WORKFORCE_TRACKING_SESSIONS ||--o{ WORKFORCE_LOCATION_ANOMALIES : flags
+    WORKFORCE_ASSIGNMENTS ||--o{ WORKFORCE_ASSIGNMENT_HANDOFFS : hands_over
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_VISIT_PARTICIPANTS : includes
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_VISIT_CHECKLIST_RESPONSES : checks
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_CONTACT_ATTEMPTS : contacts
+    WORKFORCE_FIELD_VISITS ||--o{ WORKFORCE_PROMISES_TO_PAY : records
+    RECOVERY_CASES ||--o{ WORKFORCE_PROMISES_TO_PAY : commits
+    WORKFORCE_PROMISES_TO_PAY ||--o{ WORKFORCE_PROMISE_TO_PAY_STATUS_HISTORY : transitions
+    FINANCE_PAYMENTS o|--o{ FINANCE_PROVIDER_TRANSACTIONS : provider_records
+    FINANCE_RECONCILIATION_BATCHES ||--o{ FINANCE_RECONCILIATION_ITEMS : contains
+    FINANCE_PAYMENTS o|--o{ FINANCE_RECONCILIATION_ITEMS : matches
+    FINANCE_PROVIDER_TRANSACTIONS o|--o{ FINANCE_RECONCILIATION_ITEMS : matches
+    FINANCE_PAYMENTS ||--o{ FINANCE_PAYMENT_DISPUTES : disputes
+    PERFORMANCE_COMMISSION_RUNS ||--o{ PERFORMANCE_COMMISSION_PAYOUTS : pays
+    PERFORMANCE_COMMISSION_PAYOUTS ||--o{ PERFORMANCE_COMMISSION_PAYOUT_ITEMS : contains
+    PERFORMANCE_COMMISSION_ITEMS ||--o{ PERFORMANCE_COMMISSION_PAYOUT_ITEMS : settles
+    PERFORMANCE_COMMISSION_PAYOUTS ||--o{ PERFORMANCE_COMMISSION_PAYOUT_STATUS_HISTORY : transitions
+    DOCUMENT_ATTACHMENT_VERSIONS ||--o{ DOCUMENT_ATTACHMENT_SCAN_RESULTS : scanned
+    DOCUMENT_LEGAL_HOLDS ||--o{ DOCUMENT_LEGAL_HOLD_ATTACHMENTS : holds
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_LEGAL_HOLD_ATTACHMENTS : held
+    ASSET_ASSETS ||--o{ DOCUMENT_ASSET_ATTACHMENTS : evidenced
+    DOCUMENT_ATTACHMENTS ||--o{ DOCUMENT_ASSET_ATTACHMENTS : linked
+    MASTER_DATA_CATALOGS ||--o{ MASTER_DATA_CATALOG_VERSIONS : versions
+    MASTER_DATA_CATALOG_VERSIONS ||--o{ MASTER_DATA_CATALOG_ITEMS : contains
+    MASTER_DATA_CATALOG_ITEMS ||--o{ MASTER_DATA_CATALOG_ITEM_LOCALIZATIONS : localizes
+    MASTER_DATA_CATALOG_ITEMS ||--o{ MASTER_DATA_EXTERNAL_MAPPINGS : maps
+    WORKFLOW_DEFINITIONS ||--o{ WORKFLOW_DEFINITION_VERSIONS : versions
+    WORKFLOW_DEFINITION_VERSIONS ||--o{ WORKFLOW_STATES : defines
+    WORKFLOW_DEFINITION_VERSIONS ||--o{ WORKFLOW_TRANSITIONS : allows
+    WORKFLOW_DEFINITION_VERSIONS ||--o{ WORKFLOW_INSTANCES : runs
+    WORKFLOW_BUSINESS_OBJECTS ||--o{ WORKFLOW_INSTANCES : subjects
+    WORKFLOW_INSTANCES ||--o{ WORKFLOW_WORK_ITEMS : tasks
+    WORKFLOW_WORK_ITEMS ||--o{ WORKFLOW_WORK_ITEM_ASSIGNMENTS : assigns
+    WORKFLOW_INSTANCES ||--o{ WORKFLOW_INSTANCE_HISTORY : transitions
+    APPROVAL_POLICIES ||--o{ APPROVAL_POLICY_VERSIONS : versions
+    APPROVAL_POLICY_VERSIONS ||--o{ APPROVAL_POLICY_STEPS : defines
+    APPROVAL_POLICY_VERSIONS ||--o{ APPROVAL_REQUESTS : governs
+    WORKFLOW_BUSINESS_OBJECTS ||--o{ APPROVAL_REQUESTS : approves
+    APPROVAL_REQUESTS ||--o{ APPROVAL_REQUEST_STEPS : instantiates
+    APPROVAL_POLICY_STEPS ||--o{ APPROVAL_REQUEST_STEPS : templates
+    APPROVAL_REQUEST_STEPS ||--o{ APPROVAL_DECISIONS : decides
+    IAM_MEMBERSHIPS ||--o{ APPROVAL_DECISIONS : acts
+    IAM_MEMBERSHIPS ||--o{ APPROVAL_DELEGATIONS : delegates
+    SLA_POLICIES ||--o{ SLA_POLICY_VERSIONS : versions
+    SLA_POLICY_VERSIONS ||--o{ SLA_TARGETS : defines
+    SLA_TARGETS ||--o{ SLA_INSTANCES : times
+    WORKFLOW_BUSINESS_OBJECTS ||--o{ SLA_INSTANCES : measures
+    SLA_INSTANCES ||--o{ SLA_PAUSES : pauses
+    SLA_INSTANCES ||--o{ SLA_BREACHES : breaches
+    SLA_INSTANCES ||--o{ SLA_ESCALATIONS : escalates
+    KNOWLEDGE_SPACES ||--o{ KNOWLEDGE_ARTICLES : contains
+    KNOWLEDGE_ARTICLES ||--o{ KNOWLEDGE_ARTICLE_VERSIONS : versions
+    KNOWLEDGE_ARTICLES ||--o{ KNOWLEDGE_ARTICLE_TAGS : tagged
+    KNOWLEDGE_TAGS ||--o{ KNOWLEDGE_ARTICLE_TAGS : classifies
+    KNOWLEDGE_ARTICLE_VERSIONS ||--o{ KNOWLEDGE_ARTICLE_ATTACHMENTS : evidenced
+    DOCUMENT_ATTACHMENTS ||--o{ KNOWLEDGE_ARTICLE_ATTACHMENTS : linked
+    AI_MODELS ||--o{ AI_MODEL_VERSIONS : versions
+    AI_PROMPT_TEMPLATES ||--o{ AI_PROMPT_VERSIONS : versions
+    AI_MODEL_VERSIONS ||--o{ AI_REQUESTS : serves
+    AI_PROMPT_VERSIONS ||--o{ AI_REQUESTS : prompts
+    WORKFLOW_BUSINESS_OBJECTS ||--o{ AI_REQUESTS : contexts
+    AI_REQUESTS ||--o{ AI_REQUEST_INPUTS : uses
+    KNOWLEDGE_ARTICLE_VERSIONS o|--o{ AI_REQUEST_INPUTS : grounds
+    DOCUMENT_ATTACHMENT_VERSIONS o|--o{ AI_REQUEST_INPUTS : grounds
+    AI_REQUESTS ||--o{ AI_RESULTS : produces
+    AI_RESULTS ||--o{ AI_HUMAN_REVIEWS : reviewed
+    AI_RESULTS ||--o{ AI_FEEDBACK : improves
+    REPORT_DEFINITIONS ||--o{ REPORT_DEFINITION_VERSIONS : versions
+    REPORT_DEFINITION_VERSIONS ||--o{ REPORT_RUNS : executes
+    REPORT_DEFINITION_VERSIONS ||--o{ REPORT_SUBSCRIPTIONS : schedules
+    REPORT_RUNS ||--o{ REPORT_RUN_SOURCES : lineage
+    REPORT_RUNS ||--o{ REPORT_ARTIFACTS : exports
+    REPORT_RUNS ||--o{ REPORT_SNAPSHOTS : freezes
+    DOCUMENT_ATTACHMENTS o|--o{ REPORT_ARTIFACTS : stores
+    ASSET_ASSET_TYPES ||--o{ ASSET_ASSETS : classifies
+    ASSET_ASSETS ||--o{ ASSET_ASSET_IDENTIFIERS : identifies
+    ASSET_ASSETS ||--o{ ASSET_ASSET_OWNERSHIP_HISTORY : owned
+    RECOVERY_CASES ||--o{ ASSET_CASE_ASSETS : targets
+    ASSET_ASSETS ||--o{ ASSET_CASE_ASSETS : linked
+    ASSET_ASSETS ||--o{ ASSET_ASSET_INSPECTIONS : inspected
+    ASSET_ASSETS ||--o{ ASSET_ASSET_STATUS_HISTORY : transitions
+    WAREHOUSE_FACILITIES ||--o{ WAREHOUSE_ZONES : contains
+    WAREHOUSE_ZONES ||--o{ WAREHOUSE_BINS : contains
+    WAREHOUSE_FACILITIES ||--o{ WAREHOUSE_RECEIPTS : receives
+    WAREHOUSE_RECEIPTS ||--o{ WAREHOUSE_RECEIPT_ITEMS : contains
+    ASSET_ASSETS ||--o{ WAREHOUSE_RECEIPT_ITEMS : accepted
+    ASSET_ASSETS ||--o| WAREHOUSE_STOCK_POSITIONS : positioned
+    WAREHOUSE_BINS ||--o{ WAREHOUSE_STOCK_POSITIONS : stores
+    ASSET_ASSETS ||--o{ WAREHOUSE_MOVEMENTS : moves
+    ASSET_ASSETS ||--o{ WAREHOUSE_HANDOVERS : hands_over
+    ASSET_ASSETS ||--o{ WAREHOUSE_DISPOSITION_ORDERS : disposes
+    APPROVAL_REQUESTS o|--o{ WAREHOUSE_DISPOSITION_ORDERS : authorizes
+    EVENT_CATALOG_EVENT_DEFINITIONS ||--o{ EVENT_CATALOG_EVENT_VERSIONS : versions
+    EVENT_CATALOG_PAYLOAD_SCHEMAS ||--o{ EVENT_CATALOG_EVENT_VERSIONS : schemas
+    EVENT_CATALOG_EVENT_DEFINITIONS ||--o{ EVENT_CATALOG_PUBLISHERS : publishes
+    EVENT_CATALOG_EVENT_DEFINITIONS ||--o{ EVENT_CATALOG_SUBSCRIPTIONS : consumed
+    EVENT_CATALOG_EVENT_VERSIONS ||--o{ EVENT_CATALOG_COMPATIBILITY_REVIEWS : reviewed
+    EVENT_CATALOG_EVENT_VERSIONS ||--o{ PLATFORM_OUTBOX_EVENTS : contracts

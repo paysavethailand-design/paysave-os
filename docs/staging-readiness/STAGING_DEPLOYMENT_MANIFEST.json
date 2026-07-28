@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "application": "paysave-os",
+  "releaseVersion": "0.1.0-staging-template",
+  "releaseEligibility": "blocked",
+  "sourceRevision": "SET_BY_CI",
+  "artifact": {
+    "file": "paysave-os-image.tar.gz",
+    "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+    "sha256": "SET_BY_CI",
+    "dockerfile": "docker/Dockerfile",
+    "buildOnce": true,
+    "promoteByDigest": true
+  },
+  "runtime": {
+    "nodeMajor": 22,
+    "postgresMajor": 17,
+    "containerPort": 3000,
+    "healthPath": "/login",
+    "dedicatedLivenessPath": null,
+    "dedicatedReadinessPath": null,
+    "runAsNonRoot": true,
+    "runAsUid": 10001,
+    "baseImagePinnedByDigest": true,
+    "localCanonicalBuildVerified": true,
+    "localContainerHttpStatus": 200,
+    "localContainerHealthVerified": true,
+    "localRuntimeUidVerified": 10001
+  },
+  "database": {
+    "changeAuthorized": false,
+    "migrationsIncluded": false,
+    "stagingMigrationsAllowed": false,
+    "localDisposableBackupRestoreEvidenceReviewed": true,
+    "stagingRestoreDrillVerified": false,
+    "approvedBaseline": "M001-M016",
+    "blockedMigrations": ["M017", "M018", "M019", "M020"],
+    "productionDataAllowed": false,
+    "restoreExecutionAuthorized": false
+  },
+  "promotion": {
+    "deploy": false,
+    "mode": "evidence-only",
+    "buildOnce": true,
+    "promoteByDigest": true,
+    "environments": {
+      "development": {
+        "requiredApprovers": 0,
+        "productionDataAllowed": false
+      },
+      "staging": {
+        "requiredApprovers": 1,
+        "ctoReviewRequired": true,
+        "productionDataAllowed": false,
+        "productionCredentialsAllowed": false,
+        "allowDatabaseMigrations": false
+      },
+      "production": {
+        "requiredApprovers": 2,
+        "ctoApprovalRequired": true,
+        "productionDataAllowed": true
+      }
+    }
+  },
+  "stagingReadiness": {
+    "targetEnvironment": "staging",
+    "status": "blocked_pending_cto_review_and_control_evidence",
+    "deploymentAuthorized": false,
+    "productionAccessAuthorized": false,
+    "requiredPublicVariables": [
+      "NEXT_PUBLIC_APP_URL",
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+    ],
+    "requiredRuntimeSecrets": [
+      "PAYSAVE_FIELD_ENCRYPTION_KEY",
+      "PAYSAVE_FIELD_ENCRYPTION_KEY_VERSION"
+    ],
+    "featureFlags": {
+      "PAYSAVE_ENABLE_DESIGN_PREVIEW": "must_be_false"
+    },
+    "secretManager": {
+      "provider": "PENDING_CTO_SELECTION",
+      "valuesEmbeddedInManifest": false,
+      "productionSecretReuseAllowed": false
+    },
+    "backupPolicy": {
+      "pitrMinimumDays": 7,
+      "dailyRestorePointRetentionDays": 35,
+      "monthlyRestorePointRetentionMonths": 12,
+      "restoreDrillFrequency": "quarterly",
+      "configured": false,
+      "restoreDrillPassed": false
+    },
+    "observability": {
+      "structuredAuditLogging": true,
+      "correlationIds": true,
+      "secretMetadataRedaction": true,
+      "logBackendConfigured": false,
+      "metricsBackendConfigured": false,
+      "tracingBackendConfigured": false,
+      "dashboardVerified": false,
+      "alertRoutingVerified": false
+    },
+    "rollback": {
+      "previousArtifactDigestRecorded": false,
+      "applicationRollbackRehearsed": false,
+      "configurationRollbackRehearsed": false,
+      "databaseRestoreRehearsed": false
+    },
+    "blockingGates": [
+      "isolated_staging_environment_not_evidenced",
+      "secret_manager_and_rotation_not_evidenced",
+      "dedicated_readiness_endpoint_missing",
+      "backup_restore_drill_missing",
+      "monitoring_and_alerting_not_configured",
+      "rollback_not_rehearsed",
+      "root_dockerfile_drift",
+      "ci_dependency_audit_failed"
+    ]
+  }
+}

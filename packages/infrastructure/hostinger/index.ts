@@ -1,0 +1,200 @@
+import { CAPABILITIES, type CapabilityDescriptor } from "../core/index";
+import { ManifestInfrastructureProvider } from "../shared/manifest-infrastructure-provider";
+import type { ProviderExecutor } from "../shared/provider-executor";
+
+const OPENAPI = "https://developers.hostinger.com/openapi/openapi.json";
+const WEB_APPS = "https://www.hostinger.com/web-apps-hosting";
+
+export const HOSTINGER_CAPABILITIES: readonly CapabilityDescriptor[] = [
+  {
+    id: CAPABILITIES.DOMAIN_PORTFOLIO_READ,
+    plane: "control",
+    category: "domain",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.DNS_RECORD_READ,
+    plane: "control",
+    category: "dns",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.DNS_RECORD_WRITE,
+    plane: "control",
+    category: "dns",
+    status: "supported",
+    access: "write",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.VPS_RESOURCE_READ,
+    plane: "control",
+    category: "hosting",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.VPS_RESTART,
+    plane: "control",
+    category: "hosting",
+    status: "supported",
+    access: "write",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.VPS_METRICS_READ,
+    plane: "control",
+    category: "metrics",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.HOSTING_WEBSITE_READ,
+    plane: "control",
+    category: "website",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.HOSTING_RUNTIME_RESTART,
+    plane: "control",
+    category: "hosting",
+    status: "supported",
+    access: "write",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.HOSTING_NEXTJS_RUNTIME,
+    plane: "control",
+    category: "hosting",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI, WEB_APPS],
+    limitations: [
+      "Hostinger Web Apps requires an active Business plan or higher.",
+      "The archive API auto-detects the framework from package.json; Next.js is not an app_type override value.",
+    ],
+  },
+  {
+    id: CAPABILITIES.EMAIL_MAILBOX_READ,
+    plane: "control",
+    category: "email",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.EMAIL_MAILBOX_MANAGE,
+    plane: "control",
+    category: "email",
+    status: "supported",
+    access: "write",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.SSL_CERTIFICATE_EXPIRY_READ,
+    plane: "control",
+    category: "ssl",
+    status: "partial",
+    access: "read",
+    officialReferences: [OPENAPI],
+    limitations: ["Certificate fields are documented only in Agency Hosting website details."],
+    requiredResourceTypes: ["agency-hosting-website"],
+  },
+  {
+    id: CAPABILITIES.SSL_CERTIFICATE_MANAGE,
+    plane: "control",
+    category: "ssl",
+    status: "unsupported",
+    access: "write",
+    officialReferences: [OPENAPI],
+    limitations: [
+      "The captured official OpenAPI has no generic SSL issue, install, renew, or revoke operation.",
+    ],
+  },
+  {
+    id: CAPABILITIES.FILE_OPERATION_MANAGE,
+    plane: "control",
+    category: "file-operation",
+    status: "unsupported",
+    access: "write",
+    officialReferences: [OPENAPI],
+    limitations: [
+      "Archive import/build operations are documented, but generic File Manager CRUD is unavailable.",
+    ],
+  },
+  {
+    id: CAPABILITIES.DEPLOYMENT_ARCHIVE_BUILD,
+    plane: "control",
+    category: "deployment",
+    status: "supported",
+    access: "write",
+    officialReferences: [OPENAPI],
+    limitations: [
+      "Project archives are limited to 50 MB and must be .zip, .tar.gz, or .tgz.",
+      "Supported Node.js overrides are 18, 20, 22, and 24; framework auto-detection is preferred for Next.js.",
+    ],
+  },
+  {
+    id: CAPABILITIES.DEPLOYMENT_DOCKER_COMPOSE_EXECUTE,
+    plane: "control",
+    category: "deployment",
+    status: "experimental",
+    access: "write",
+    officialReferences: [OPENAPI],
+    limitations: ["VPS Docker Manager operations are explicitly experimental."],
+  },
+  {
+    id: CAPABILITIES.LOGS_BUILD_READ,
+    plane: "control",
+    category: "logs",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.BACKUP_VPS_READ,
+    plane: "control",
+    category: "backup",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.BACKUP_VPS_RESTORE,
+    plane: "control",
+    category: "backup",
+    status: "supported",
+    access: "destructive",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.SNAPSHOT_VPS_READ,
+    plane: "control",
+    category: "snapshot",
+    status: "supported",
+    access: "read",
+    officialReferences: [OPENAPI],
+  },
+  {
+    id: CAPABILITIES.SNAPSHOT_VPS_RESTORE,
+    plane: "control",
+    category: "snapshot",
+    status: "supported",
+    access: "destructive",
+    officialReferences: [OPENAPI],
+  },
+];
+
+export function createHostingerProvider(
+  executor: ProviderExecutor,
+): ManifestInfrastructureProvider {
+  return new ManifestInfrastructureProvider("hostinger", HOSTINGER_CAPABILITIES, executor);
+}

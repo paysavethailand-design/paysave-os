@@ -1,0 +1,7 @@
+project_id = "rptqfhtanjtrxtfbgrkb"
+
+[api]
+schemas = ["public", "graphql_public", "iam"]
+
+[functions.paysave-claims-hook]
+verify_jwt = false

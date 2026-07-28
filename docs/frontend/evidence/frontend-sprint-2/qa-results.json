@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "pages": [
+    {
+      "name": "case-list-desktop",
+      "url": "/recovery/cases",
+      "overflow": false,
+      "serious": []
+    },
+    {
+      "name": "case-detail-desktop",
+      "url": "/recovery/cases/RC-2026-0018",
+      "overflow": false,
+      "serious": []
+    },
+    {
+      "name": "document-viewer-dialog",
+      "serious": []
+    },
+    {
+      "name": "assignment-desktop",
+      "url": "/recovery/assignments",
+      "overflow": false,
+      "serious": []
+    },
+    {
+      "name": "case-detail-dark",
+      "serious": []
+    },
+    {
+      "name": "case-list-mobile",
+      "overflow": false,
+      "serious": []
+    }
+  ],
+  "externalRequests": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

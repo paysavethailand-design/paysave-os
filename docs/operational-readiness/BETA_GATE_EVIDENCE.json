@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "program": "PAYSAVE Operation Readiness Program",
+  "deploymentAuthorized": false,
+  "productionAccessAuthorized": false,
+  "architectureChanged": false,
+  "databaseSchemaChanged": false,
+  "workstreams": {
+    "environment": {
+      "status": "BLOCKED",
+      "externalEvidenceVerified": false,
+      "blockers": [
+        "approved_staging_environment_missing",
+        "secret_manager_runtime_injection_missing",
+        "live_staging_manifest_verification_missing"
+      ]
+    },
+    "observability": {
+      "status": "BLOCKED",
+      "externalEvidenceVerified": false,
+      "blockers": [
+        "metrics_backend_and_dashboard_missing",
+        "alert_receiver_and_firing_evidence_missing",
+        "external_error_tracking_missing",
+        "dependency_readiness_probe_missing"
+      ]
+    },
+    "resilience": {
+      "status": "BLOCKED",
+      "externalEvidenceVerified": false,
+      "blockers": [
+        "managed_staging_restore_drill_missing",
+        "approved_previous_image_rollback_missing",
+        "rpo_rto_measurement_missing",
+        "dr_rehearsal_signoff_missing"
+      ]
+    },
+    "security": {
+      "status": "BLOCKED",
+      "externalEvidenceVerified": false,
+      "blockers": [
+        "secret_rotation_rehearsal_missing",
+        "immutable_staging_artifact_scan_missing",
+        "staging_least_privilege_verification_missing",
+        "residual_dependency_override_risk_not_accepted"
+      ]
+    }
+  }
+}

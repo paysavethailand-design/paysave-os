@@ -1,0 +1,254 @@
+name: PAYSAVE OS CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  eslint:
+    name: 1 - ESLint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  typescript:
+    name: 2 - TypeScript
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run architecture:check
+      - run: npm run typecheck
+
+  unit-test:
+    name: 3 - Unit Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p artifacts/test-results && set -o pipefail && npm run test:unit | tee artifacts/test-results/unit.log
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unit-test-evidence
+          path: artifacts/test-results/unit.log
+          if-no-files-found: error
+          retention-days: 30
+
+  integration-test:
+    name: 4 - Integration Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p artifacts/test-results && set -o pipefail && npm run test:integration | tee artifacts/test-results/integration.log
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-test-evidence
+          path: artifacts/test-results/integration.log
+          if-no-files-found: error
+          retention-days: 30
+
+  coverage:
+    name: Coverage Gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test:coverage
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-report
+          path: artifacts/coverage
+          if-no-files-found: error
+          retention-days: 30
+
+  playwright:
+    name: 5 - Playwright
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: |
+            artifacts/playwright-report
+            artifacts/playwright-output
+            artifacts/test-results/playwright.junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+  database-verification:
+    name: 6 - Database Verification (PostgreSQL 17)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: mkdir -p artifacts/test-results && set -o pipefail && npm run verify:database | tee artifacts/test-results/database-verification.log
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: database-verification-evidence
+          path: artifacts/test-results/database-verification.log
+          if-no-files-found: error
+          retention-days: 30
+
+  openapi-validation:
+    name: 7 - OpenAPI Validation
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run validate:openapi
+      - run: npm run validate:deployment-manifest
+      - run: npm run ci:no-deploy
+
+  dependency-audit:
+    name: Security - Dependency Audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run audit:dependencies
+
+  build:
+    name: 8 - Build
+    needs:
+      [
+        eslint,
+        typescript,
+        unit-test,
+        integration-test,
+        coverage,
+        playwright,
+        database-verification,
+        openapi-validation,
+        dependency-audit,
+      ]
+    runs-on: ubuntu-24.04
+    outputs:
+      image-reference: ${{ steps.meta.outputs.image-reference }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - id: meta
+        run: echo "image-reference=paysave-os:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - run: |
+          docker build --pull \
+            --file docker/Dockerfile \
+            --tag "${{ steps.meta.outputs.image-reference }}" \
+            --build-arg NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.invalid \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ci_placeholder \
+            .
+      - run: mkdir -p artifacts/build && docker save "${{ steps.meta.outputs.image-reference }}" | gzip -9 > artifacts/build/paysave-os-image.tar.gz
+      - run: npm sbom --sbom-format cyclonedx > artifacts/build/npm-sbom.cdx.json
+      - env:
+          IMAGE_REFERENCE: ${{ steps.meta.outputs.image-reference }}
+          RELEASE_ELIGIBLE: "true"
+        run: node scripts/ci/create-artifact-manifest.mjs artifacts/build/paysave-os-image.tar.gz artifacts/build/deployment-manifest.json
+      - run: node scripts/ci/validate-deployment-manifest.mjs artifacts/build/deployment-manifest.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: raw-build-${{ github.sha }}
+          path: artifacts/build
+          if-no-files-found: error
+          retention-days: 14
+
+  artifact:
+    name: 9 - Artifact Verification
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: raw-build-${{ github.sha }}
+          path: artifacts/build
+      - run: cd artifacts/build && sha256sum --check SHA256SUMS
+      - run: node scripts/ci/validate-deployment-manifest.mjs artifacts/build/deployment-manifest.json
+      - run: gzip -dc artifacts/build/paysave-os-image.tar.gz | docker load
+      - run: test "$(docker image inspect '${{ needs.build.outputs.image-reference }}' --format '{{.Config.User}}')" = "paysave"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: validated-build-${{ github.sha }}
+          path: artifacts/build
+          if-no-files-found: error
+          retention-days: 30
+
+  release-package:
+    name: 10 - Release Package
+    needs: [artifact, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: validated-build-${{ github.sha }}
+          path: artifacts/build
+      - run: bash scripts/ci/create-release-package.sh artifacts/build artifacts/release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: paysave-os-release-package
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 90

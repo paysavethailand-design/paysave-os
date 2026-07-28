@@ -1,0 +1,2643 @@
+{
+  "source": "docs/database/PAYSAVE_Physical_Schema_Specification_v1.0.md",
+  "target_ids": [
+    "T124",
+    "T125",
+    "T126",
+    "T127",
+    "T128",
+    "T129",
+    "T130",
+    "T131",
+    "T132",
+    "T133",
+    "T134",
+    "T135",
+    "T136",
+    "T137",
+    "T138",
+    "T139",
+    "T156",
+    "T157",
+    "T158",
+    "T159",
+    "T160",
+    "T161"
+  ],
+  "tables": [
+    {
+      "id": "T124",
+      "table": "ai.models",
+      "purpose": "Approved model identity",
+      "profiles": "Constraint `C01`; Index `I01`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C01: global control-plane; code unique",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "provider_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "model_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "capability",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "risk_tier",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T125",
+      "table": "ai.model_versions",
+      "purpose": "Model release/config",
+      "profiles": "Constraint `C05`; Index `I05`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C05: version unique; deprecated versions retained; start < end when end exists",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; IX FK `[model_id]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "model_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `ai.models`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "version_label",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "release_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "effective_from",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "effective_to",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level; Must be after paired start when present",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T126",
+      "table": "ai.prompt_templates",
+      "purpose": "Partner prompt/use-case identity",
+      "profiles": "Constraint `C03`; Index `I03`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C03: active code unique per partner; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, business_object_id]`; UQ active business key `[partner_id, code]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "Unique/active lookup where source invariant declares",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "purpose_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "risk_tier",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T127",
+      "table": "ai.prompt_versions",
+      "purpose": "Prompt/config version",
+      "profiles": "Constraint `C05`; Index `I05`; Partition `P00`; Encryption `E04`; Classification `C4/P3`",
+      "table_constraints": "C05: published immutable; sensitive content not logged; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, prompt_template_id]`; UQ version `[partner_id, prompt_template_id, version_no]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "prompt_template_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.prompt_templates`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "version_no",
+          "type": "integer",
+          "nullability": "NOT NULL",
+          "default": "1",
+          "constraint": "Integer semantic range; versions and ordinals positive; Monotonic; positive",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "template_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "template_hash",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "Keyed digest for sensitive lookup; otherwise integrity digest"
+        },
+        {
+          "column": "policy_json",
+          "type": "jsonb",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Versioned schema allowlist and size bound; no hidden FK; Contract version required",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: payload inherits highest source classification; sensitive content encrypted/minimized"
+        },
+        {
+          "column": "published_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E04: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T128",
+      "table": "ai.requests",
+      "purpose": "Governed AI invocation",
+      "profiles": "Constraint `C03`; Index `I03`; Partition `P04`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C03: prompt/subject/requester same partner; idempotent request ref; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[model_version_id]`; IX FK `[partner_id, prompt_version_id]`; IX FK `[partner_id, business_object_id]`; IX FK `[requested_by]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "model_version_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `ai.model_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "prompt_version_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.prompt_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "requested_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "purpose_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "sensitivity",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "requested_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "completed_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T129",
+      "table": "ai.request_inputs",
+      "purpose": "Typed AI input lineage",
+      "profiles": "Constraint `C03`; Index `I03`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C03: request same partner; at least one typed source; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, request_id]`; IX FK `[partner_id, business_object_id]`; IX FK `[partner_id, attachment_version_id]`; IX FK `[partner_id, article_version_id]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "request_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.requests`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "attachment_version_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `document_store.attachment_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "article_version_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `knowledge.article_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "input_hash",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "Keyed digest for sensitive lookup; otherwise integrity digest"
+        },
+        {
+          "column": "classification",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T130",
+      "table": "ai.results",
+      "purpose": "Immutable output/recommendation",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P04`; Encryption `E03`; Classification `C4/P3`",
+      "table_constraints": "C04: output protected by classification; no chain-of-thought; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, request_id]`; IX FK `[partner_id, business_object_id]`; IX keyset `[partner_id, request_id, generated_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "request_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.requests`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "result_type",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "output_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "Private encrypted object/reference; signed short-lived access only"
+        },
+        {
+          "column": "output_hash",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "Keyed digest for sensitive lookup; otherwise integrity digest"
+        },
+        {
+          "column": "confidence",
+          "type": "numeric(7,4)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "0..1 for score/confidence; rating uses approved bounded scale",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "generated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T131",
+      "table": "ai.human_reviews",
+      "purpose": "Human-in-the-loop decision",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C04: same partner; append-only; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, result_id]`; IX FK `[partner_id, reviewer_membership_id]`; IX FK `[partner_id, approval_request_id]`; IX keyset `[partner_id, result_id, reviewed_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "result_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.results`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "reviewer_membership_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `iam.memberships`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "decision_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "reason_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "approval_request_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `approval.requests`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "reviewed_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T132",
+      "table": "ai.feedback",
+      "purpose": "Quality feedback",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C04: same partner; append-only; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, result_id]`; IX FK `[partner_id, membership_id]`; IX keyset `[partner_id, result_id, recorded_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "result_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `ai.results`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "membership_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `iam.memberships`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "feedback_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "rating",
+          "type": "numeric(7,4)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "0..1 for score/confidence; rating uses approved bounded scale",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "notes_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "recorded_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T133",
+      "table": "report.definitions",
+      "purpose": "Saved report identity",
+      "profiles": "Constraint `C02`; Index `I02`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C02: active code unique per partner; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, owner_membership_id]`; IX FK `[partner_id, business_object_id]`; UQ active business key `[partner_id, code]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "Unique/active lookup where source invariant declares",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "name",
+          "type": "varchar(255)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed non-empty display value",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "owner_membership_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `iam.memberships`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "classification",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T134",
+      "table": "report.definition_versions",
+      "purpose": "Report specification version",
+      "profiles": "Constraint `C05`; Index `I05`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C05: published immutable; no executable SQL stored; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, definition_id]`; UQ version `[partner_id, definition_id, version_no]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "definition_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.definitions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "version_no",
+          "type": "integer",
+          "nullability": "NOT NULL",
+          "default": "1",
+          "constraint": "Integer semantic range; versions and ordinals positive; Monotonic; positive",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "source_contract_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "parameter_schema_json",
+          "type": "jsonb",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Versioned schema allowlist and size bound; no hidden FK; Contract version required",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: payload inherits highest source classification; sensitive content encrypted/minimized"
+        },
+        {
+          "column": "output_schema_json",
+          "type": "jsonb",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Versioned schema allowlist and size bound; no hidden FK; Contract version required",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: payload inherits highest source classification; sensitive content encrypted/minimized"
+        },
+        {
+          "column": "published_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T135",
+      "table": "report.runs",
+      "purpose": "Report execution record",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P04`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C04: inputs immutable after start; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, definition_version_id]`; IX FK `[requested_by]`; IX FK `[partner_id, business_object_id]`; IX keyset `[partner_id, definition_version_id, created_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "definition_version_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.definition_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "requested_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "requested_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "started_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "completed_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "row_count",
+          "type": "bigint",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-negative",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T136",
+      "table": "report.run_sources",
+      "purpose": "Data-lineage watermark",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C04: run same partner; append-only; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, run_id]`; IX FK `[partner_id, business_object_id]`; IX keyset `[partner_id, run_id, created_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "run_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.runs`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "source_kind",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "source_version",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "watermark",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "snapshot_hash",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "Keyed digest for sensitive lookup; otherwise integrity digest"
+        },
+        {
+          "column": "business_object_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `workflow.business_objects`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T137",
+      "table": "report.artifacts",
+      "purpose": "Generated export metadata",
+      "profiles": "Constraint `C08`; Index `I03`; Partition `P00`; Encryption `E03`; Classification `C4/P3`",
+      "table_constraints": "C08: run/attachment same partner; sensitive export audited; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, run_id]`; IX FK `[partner_id, attachment_id]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "run_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.runs`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "attachment_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `document_store.attachments`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "format_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "classification",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "expires_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "checksum",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T138",
+      "table": "report.subscriptions",
+      "purpose": "Scheduled report subscription",
+      "profiles": "Constraint `C03`; Index `I03`; Partition `P00`; Encryption `E01`; Classification `C4/P3`",
+      "table_constraints": "C03: definition/member same partner; no credentials; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, definition_version_id]`; IX FK `[partner_id, membership_id]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "definition_version_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.definition_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "membership_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `iam.memberships`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "schedule_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "delivery_channel",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "next_run_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E01: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T139",
+      "table": "report.snapshots",
+      "purpose": "Frozen metric/read-model snapshot",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P04`; Encryption `E03`; Classification `C4/P3`",
+      "table_constraints": "C04: immutable; not OLTP source of truth; partner_id NOT NULL; unique tenant identity `(partner_id,id)` where unpartitioned; start < end when end exists; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[partner_id, run_id]`; IX keyset `[partner_id, run_id, created_at DESC, id DESC]`",
+      "rls_requirement": "REQUIRED fail-closed RLS for SELECT/INSERT/UPDATE/retirement: row partner must match active authorized membership and branch/permission scope where applicable; service bypass separately audited.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "run_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `report.runs`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "snapshot_type",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "period_start",
+          "type": "date",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid business date; range ordering enforced",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "period_end",
+          "type": "date",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid business date; range ordering enforced; Must be after paired start when present",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "storage_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "Private encrypted object/reference; signed short-lived access only"
+        },
+        {
+          "column": "row_count",
+          "type": "bigint",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-negative",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "checksum",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E03: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T156",
+      "table": "event_catalog.event_definitions",
+      "purpose": "Stable enterprise event identity",
+      "profiles": "Constraint `C01`; Index `I01`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C01: global control-plane; code unique",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ business key `[code]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "Unique/active lookup where source invariant declares",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "owning_domain",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "aggregate_kind",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "classification",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T157",
+      "table": "event_catalog.event_versions",
+      "purpose": "Event contract version",
+      "profiles": "Constraint `C05`; Index `I05`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C05: published immutable; definition+version unique; start < end when end exists",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; IX FK `[event_definition_id]`; IX FK `[payload_schema_id]`; UQ version `[event_definition_id, version_no]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "event_definition_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.event_definitions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "version_no",
+          "type": "integer",
+          "nullability": "NOT NULL",
+          "default": "1",
+          "constraint": "Integer semantic range; versions and ordinals positive; Monotonic; positive",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "payload_schema_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.payload_schemas`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "compatibility_mode",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "effective_from",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "effective_to",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level; Must be after paired start when present",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "published_at",
+          "type": "timestamptz",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T158",
+      "table": "event_catalog.payload_schemas",
+      "purpose": "Payload schema metadata",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C04: schema code+version unique; immutable after publish; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; IX keyset `[id, created_at DESC, id DESC]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "schema_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "version_no",
+          "type": "integer",
+          "nullability": "NOT NULL",
+          "default": "1",
+          "constraint": "Integer semantic range; versions and ordinals positive; Monotonic; positive",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "schema_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "schema_hash",
+          "type": "bytea",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Exactly 32 bytes; keyed digest where lookup is sensitive; Immutable digest",
+          "fk": "—",
+          "index": "Exact B-tree only when lookup/dedup contract requires",
+          "encryption": "Keyed digest for sensitive lookup; otherwise integrity digest"
+        },
+        {
+          "column": "classification",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T159",
+      "table": "event_catalog.publishers",
+      "purpose": "Approved publisher registration",
+      "profiles": "Constraint `C03+C11`; Index `I03`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C03+C11: partner optional; active tuple unique; separate global and tenant uniqueness domains; null scope only for approved global rows",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[event_definition_id]`; IX FK `[partner_id, integration_id]`",
+      "rls_requirement": "REQUIRED split-scope RLS: tenant rows match active membership; global rows use separate global authority; no sentinel scope; write checks fail closed.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "event_definition_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.event_definitions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "publisher_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "integration_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Composite same-tenant FK with partner scope → `platform.integrations`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T160",
+      "table": "event_catalog.subscriptions",
+      "purpose": "Approved consumer contract",
+      "profiles": "Constraint `C03+C11`; Index `I03`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C03+C11: partner optional; no runtime secret; separate global and tenant uniqueness domains; null scope only for approved global rows",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; UQ tenant parent key `[partner_id, id]`; IX FK `[event_definition_id]`",
+      "rls_requirement": "REQUIRED split-scope RLS: tenant rows match active membership; global rows use separate global authority; no sentinel scope; write checks fail closed.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "partner_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Tenant scope; no sentinel UUID; same-scope integrity",
+          "fk": "Direct typed FK → `tenant.partners`; RESTRICT",
+          "index": "Tenant leading key; `(scope,id)` candidate/lookup",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "event_definition_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.event_definitions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "consumer_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "min_version",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "delivery_policy_ref",
+          "type": "text",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Non-empty opaque reference; provider and length bound",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "status",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time on initial insert",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "updated_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "No standalone index; provenance queries use audit/history access paths",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    },
+    {
+      "id": "T161",
+      "table": "event_catalog.compatibility_reviews",
+      "purpose": "Contract compatibility decision",
+      "profiles": "Constraint `C04`; Index `I04`; Partition `P00`; Encryption `E00`; Classification `C2/P1`",
+      "table_constraints": "C04: same definition; append-only; append-only; corrections are new facts; no update/delete semantic",
+      "fk_policy": "Every typed FK below uses `RESTRICT`; tenant parents use same-tenant composite enforcement.",
+      "index_contract": "PK candidate `[id]`; IX FK `[event_version_id]`; IX FK `[previous_version_id]`; IX FK `[reviewed_by]`; IX FK `[approval_request_id]`; IX keyset `[event_version_id, reviewed_at DESC, id DESC]`",
+      "rls_requirement": "Global/control-plane table: tenant-row RLS is not applicable; direct writes restricted to named global authority, tenant reads only through approved control-plane policy.",
+      "columns": [
+        {
+          "column": "id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "Generated UUIDv7",
+          "constraint": "Immutable entity identity; physical key follows partition profile",
+          "fk": "—",
+          "index": "Identity/PK profile; partition key included for P01/P02",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "event_version_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.event_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "previous_version_id",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `event_catalog.event_versions`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "decision_code",
+          "type": "varchar(100)",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Trimmed normalized bounded code; governed status/category",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "reviewed_by",
+          "type": "uuid",
+          "nullability": "NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `iam.users`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "approval_request_id",
+          "type": "uuid",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "Valid UUID; typed reference only",
+          "fk": "Direct typed FK → `approval.requests`; RESTRICT",
+          "index": "B-tree FK access path; tenant tables use `(partner_id,column)",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "reviewed_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "None — caller supplies or null is explicit",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        },
+        {
+          "column": "created_at",
+          "type": "timestamptz",
+          "nullability": "NOT NULL",
+          "default": "Current UTC record time",
+          "constraint": "UTC instant; lifecycle ordering enforced at table level",
+          "fk": "—",
+          "index": "No standalone index; covered only by approved composite/query profile",
+          "encryption": "E00: provider at-rest encryption; no additional column ciphertext declared"
+        }
+      ]
+    }
+  ]
+}

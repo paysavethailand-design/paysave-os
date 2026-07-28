@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "phase": "Stage 4.0 Phase C",
+  "assessmentAt": "2026-07-24T04:09:45Z",
+  "environment": {
+    "name": "paysave-staging",
+    "projectRef": "rptqfhtanjtrxtfbgrkb",
+    "region": "ap-southeast-1",
+    "projectStatus": "ACTIVE_HEALTHY",
+    "productionAccessed": false,
+    "productionDeployed": false
+  },
+  "quality": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "architectureTests": { "passed": 9, "failed": 0 },
+    "operationsTests": { "passed": 36, "failed": 0 },
+    "workspaceTests": { "passed": 294, "failed": 0 },
+    "localTestsTotal": { "passed": 339, "failed": 0 },
+    "playwrightSmoke": { "passed": 2, "failed": 0, "scope": "mock-login-only" },
+    "openapi": { "status": "PASS", "ignoredFindings": 11 },
+    "dependencyVulnerabilities": { "total": 0, "high": 0, "critical": 0 }
+  },
+  "gates": {
+    "deploymentManifest": "PASS_DEPLOY_FALSE",
+    "noDeployPolicy": "PASS",
+    "betaGate": "HOLD_EXIT_1",
+    "recommendation": "NO_GO"
+  },
+  "remote": {
+    "edgeFunction": { "name": "paysave-claims-hook", "status": "ACTIVE", "version": 3 },
+    "databaseConnectivity": "PASS",
+    "databaseSize": "18 MB",
+    "storageStatusHttp": 200,
+    "restGatewayHttpWithoutKey": 401,
+    "realtimeGatewayHttpWithoutKey": 401,
+    "authHealthHttpWithoutKey": 401,
+    "jwtHookProbe": {
+      "http": 503,
+      "failureClass": "permission_denied",
+      "result": "claim_resolver_unavailable"
+    },
+    "pitrEnabled": false,
+    "backups": null
+  },
+  "integrity": {
+    "migrationFileCount": 18,
+    "migrationManifestSha256Before": "a88eabfdbb82c5de2e478a9e7b4600e24828a4dcf1d9c0cf6d342be633730f23",
+    "migrationManifestSha256After": "a88eabfdbb82c5de2e478a9e7b4600e24828a4dcf1d9c0cf6d342be633730f23",
+    "architectureManifestSha256Before": "58affcb8e0ceaee4ba5d95b98030f9948d0cbeb2ffc221d5a4e326b083d2838e",
+    "architectureManifestSha256After": "58affcb8e0ceaee4ba5d95b98030f9948d0cbeb2ffc221d5a4e326b083d2838e",
+    "runtimeManifestSha256Before": "75ab516dbfb1eb0391a89e4cafc5eafac03a3ebfdf16556782615485996e2fd2",
+    "runtimeManifestSha256After": "75ab516dbfb1eb0391a89e4cafc5eafac03a3ebfdf16556782615485996e2fd2"
+  }
+}

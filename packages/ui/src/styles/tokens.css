@@ -1,0 +1,135 @@
+@theme inline {
+  --font-sans: var(--ps-font-sans);
+
+  --color-background: var(--ps-color-background);
+  --color-foreground: var(--ps-color-foreground);
+  --color-surface: var(--ps-color-surface);
+  --color-card: var(--ps-color-surface);
+  --color-card-foreground: var(--ps-color-foreground);
+  --color-primary: var(--ps-color-primary);
+  --color-primary-hover: var(--ps-color-primary-hover);
+  --color-primary-foreground: var(--ps-color-primary-foreground);
+  --color-success: var(--ps-color-success);
+  --color-success-hover: var(--ps-color-success-hover);
+  --color-success-foreground: var(--ps-color-success-foreground);
+  --color-muted: var(--ps-color-muted);
+  --color-muted-foreground: var(--ps-color-muted-foreground);
+  --color-border: var(--ps-color-border);
+  --color-input: var(--ps-color-input);
+  --color-danger: var(--ps-color-danger);
+  --color-warning: var(--ps-color-warning);
+  --color-info: var(--ps-color-info);
+
+  --radius-sm: var(--ps-radius-sm);
+  --radius-md: var(--ps-radius-md);
+  --radius-lg: var(--ps-radius-lg);
+  --radius-xl: var(--ps-radius-xl);
+  --radius-2xl: var(--ps-radius-2xl);
+
+  --shadow-xs: var(--ps-shadow-xs);
+  --shadow-input: var(--ps-shadow-input);
+  --shadow-button: var(--ps-shadow-button);
+  --shadow-card: var(--ps-shadow-card);
+  --shadow-glass: var(--ps-shadow-glass);
+  --shadow-elevated: var(--ps-shadow-elevated);
+  --shadow-dialog: var(--ps-shadow-dialog);
+
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+}
+
+:root {
+  --ps-font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "IBM Plex Sans Thai", "Noto Sans Thai",
+    "Segoe UI", sans-serif;
+
+  --ps-color-primary: #0a66c2;
+  --ps-color-primary-hover: #0958a8;
+  --ps-color-primary-foreground: #ffffff;
+  --ps-color-success: #10734f;
+  --ps-color-success-hover: #0b5f41;
+  --ps-color-success-foreground: #ffffff;
+  --ps-color-white: #ffffff;
+  --ps-color-background: #f4f7fb;
+  --ps-color-surface: #ffffff;
+  --ps-color-foreground: #0b1220;
+  --ps-color-muted: #eaf0f6;
+  --ps-color-muted-foreground: #5d6b7c;
+  --ps-color-border: #dce4ee;
+  --ps-color-input: #cbd6e2;
+  --ps-color-danger: #b42318;
+  --ps-color-warning: #9a3412;
+  --ps-color-ring: #0a66c2;
+  --ps-color-info: #175cd3;
+
+  --ps-space-1: 0.25rem;
+  --ps-space-2: 0.5rem;
+  --ps-space-3: 0.75rem;
+  --ps-space-4: 1rem;
+  --ps-space-6: 1.5rem;
+  --ps-space-8: 2rem;
+  --ps-space-12: 3rem;
+  --ps-space-16: 4rem;
+
+  --ps-radius-sm: 0.5rem;
+  --ps-radius-md: 0.75rem;
+  --ps-radius-lg: 1rem;
+  --ps-radius-xl: 1.5rem;
+  --ps-radius-2xl: 2rem;
+
+  --ps-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
+  --ps-shadow-input: 0 1px 2px rgb(15 23 42 / 0.04);
+  --ps-shadow-button: 0 8px 18px rgb(10 102 194 / 0.16);
+  --ps-shadow-card: 0 12px 35px rgb(46 64 87 / 0.08);
+  --ps-shadow-glass: 0 24px 60px rgb(22 50 82 / 0.14);
+  --ps-shadow-elevated: 0 30px 75px rgb(22 50 82 / 0.16);
+  --ps-shadow-dialog: 0 36px 100px rgb(15 35 62 / 0.24);
+}
+
+.dark {
+  color-scheme: dark;
+  --ps-color-primary: #60a5fa;
+  --ps-color-primary-hover: #93c5fd;
+  --ps-color-primary-foreground: #07111f;
+  --ps-color-success: #34d399;
+  --ps-color-success-hover: #6ee7b7;
+  --ps-color-success-strong: #6ee7b7;
+  --ps-color-success-foreground: #071b13;
+  --ps-color-background: #070b12;
+  --ps-color-surface: #111827;
+  --ps-color-foreground: #f8fafc;
+  --ps-color-muted: #182231;
+  --ps-color-muted-foreground: #a7b3c3;
+  --ps-color-border: #253246;
+  --ps-color-input: #35445a;
+  --ps-color-danger: #f97066;
+  --ps-color-warning: #fdb022;
+  --ps-color-info: #84caff;
+  --ps-color-ring: #60a5fa;
+  --ps-shadow-card: 0 18px 48px rgb(0 0 0 / 0.28);
+  --ps-shadow-glass: 0 28px 70px rgb(0 0 0 / 0.35);
+  --ps-shadow-elevated: 0 32px 80px rgb(0 0 0 / 0.42);
+  --ps-shadow-dialog: 0 40px 110px rgb(0 0 0 / 0.55);
+}
+
+* {
+  border-color: var(--ps-color-border);
+}
+
+html {
+  font-family: var(--ps-font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--ps-color-background);
+  color: var(--ps-color-foreground);
+}
+
+::selection {
+  background: rgb(10 102 194 / 0.16);
+  color: var(--ps-color-foreground);
+}

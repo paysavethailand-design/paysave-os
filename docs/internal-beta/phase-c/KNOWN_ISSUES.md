@@ -1,0 +1,20 @@
+# PAYSAVE OS — Stage 4.0 Phase C Known Issues
+
+| ID    | Severity | Issue / evidence                                                                                            | Impact                                                           | Status                                   |
+| ----- | -------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| C-001 | BLOCKER  | Signed JWT hook probe returns 503 `permission_denied` / `claim_resolver_unavailable`                        | Login and authenticated workflows cannot be verified             | OPEN; CTO decision required              |
+| C-002 | BLOCKER  | Recovery UI imports `MockRecoveryRepository`; case source is `mock`                                         | UI actions are non-persistent and not Staging UAT evidence       | OPEN                                     |
+| C-003 | BLOCKER  | Case close/reopen and workflow lifecycle routes intentionally return 501 `atomic_transaction_not_supported` | Update/close main workflow incomplete                            | OPEN; architecture change not authorized |
+| C-004 | BLOCKER  | No Storage upload client/path found for photo attachment                                                    | Upload Photo workflow missing                                    | OPEN                                     |
+| C-005 | BLOCKER  | Reports appears only in navigation; no report page/API                                                      | Reports workflow missing                                         | OPEN                                     |
+| C-006 | BLOCKER  | Approval UX exists only on mock recovery aggregate; no live Staging E2E evidence                            | Approval cannot pass UAT                                         | OPEN                                     |
+| C-007 | BLOCKER  | No approved Staging application runtime/artifact deployment                                                 | Frontend/backend live health and workflows cannot be tested      | OPEN                                     |
+| C-008 | BLOCKER  | Metrics/log/alert backend, dashboard, receiver and on-call evidence absent                                  | Error rate, latency, CPU/memory and incident response unverified | OPEN                                     |
+| C-009 | BLOCKER  | Provider metadata: `pitr_enabled=false`, `backups=null`; no managed restore drill                           | Backup/restore gate fails                                        | OPEN                                     |
+| C-010 | BLOCKER  | No application/config rollback rehearsal against immutable Staging artifacts                                | Rollback gate fails                                              | OPEN                                     |
+| C-011 | MAJOR    | `/readyz` is explicitly `config_only`                                                                       | DB/Auth/Storage dependency health not covered                    | OPEN                                     |
+| C-012 | BLOCKER  | Queue tables exist but no verified worker/scheduler; current estimated queue rows are zero                  | Background-job operation/recovery unproven                       | OPEN                                     |
+| C-013 | MAJOR    | Audit/error output is process console; no centralized retention/access/trace evidence                       | Audit/activity/error history not operationally durable           | OPEN                                     |
+| C-014 | MAJOR    | Local E2E covers only mock-login redirect and accessibility smoke                                           | Main workflow regression coverage absent                         | OPEN                                     |
+
+No listed item authorizes an out-of-scope fix. Permission/grant/RLS/JWT/schema/migration/architecture changes require separate CTO authorization.

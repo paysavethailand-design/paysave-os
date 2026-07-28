@@ -1,0 +1,14 @@
+# Dependency Risk Register
+
+| Risk                                                     | Current state                                                                  | Evidence                                                             | Residual action                                                                      | Gate                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| PostCSS vulnerable versions below 8.5.10                 | Resolved to 8.5.20                                                             | Lock baseline + npm audit                                            | Keep baseline guard in CI                                                            | Closed                           |
+| Sharp vulnerable versions below 0.35.0                   | Resolved to 0.35.0                                                             | Lock baseline + npm audit                                            | Keep baseline guard in CI                                                            | Closed                           |
+| Vulnerable nested Next copies reintroduced               | Prevented                                                                      | `check-dependency-baseline.mjs` validates root and any nested copies | CI must remain required                                                              | Closed                           |
+| Next.js 15 dependency-range compatibility with overrides | Build and tests pass; package-manager tree compatibility requires owner review | Production build PASS; 338 tests PASS                                | Upgrade to an upstream-compatible patched release when approved; no forced downgrade | Open                             |
+| Final local candidate image OS/package vulnerabilities   | Clean after removing npm/npx from runtime                                      | Trivy JSON: 0 HIGH, 0 CRITICAL; image `sha256:ca13ce…`               | Repeat against immutable Staging artifact                                            | Closed locally / Open externally |
+| Secret leakage in runtime/logs                           | Structured operational errors omit raw message                                 | Error-tracker tests                                                  | Add external backend and verify redaction end-to-end                                 | Open                             |
+
+## Current security decision
+
+`npm audit --audit-level=high` reports **0 vulnerabilities**, but Security Gate remains BLOCKED while open runtime and compatibility risks lack operational evidence or owner acceptance.

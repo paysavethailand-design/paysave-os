@@ -1,0 +1,62 @@
+{
+  "name": "paysave-os",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "architecture:check": "node scripts/check-architecture.mjs && node scripts/security-review-evidence.mjs",
+    "audit:dependencies": "node --test scripts/ci/check-dependency-baseline.test.mjs scripts/ci/check-runtime-container.test.mjs && npm audit --audit-level=high && node scripts/ci/check-dependency-baseline.mjs && node scripts/ci/check-runtime-container.mjs",
+    "build": "npm run build --workspace=@paysave/web",
+    "beta:gate": "node scripts/ci/evaluate-beta-gate.mjs docs/operational-readiness/BETA_GATE_EVIDENCE.json",
+    "ci:no-deploy": "node scripts/ci/check-no-deploy.mjs",
+    "dev": "npm run dev --workspace=@paysave/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint --workspaces --if-present",
+    "production:gate": "node scripts/ci/evaluate-production-gate.mjs artifacts/production-readiness/stage5-5/PRODUCTION_GATE_EVIDENCE.json",
+    "test": "npm run test:architecture && npm run test:operations && npm run test:workspaces",
+    "test:architecture": "node --test scripts/check-architecture.test.mjs scripts/security-review-evidence.test.mjs",
+    "test:dependency-baseline": "node --test scripts/ci/check-dependency-baseline.test.mjs && node scripts/ci/check-dependency-baseline.mjs",
+    "test:operations": "node --test scripts/ci/*.test.mjs scripts/performance/*.test.mjs tests/scripts/operations/*.test.mjs",
+    "test:coverage": "npm run test --workspace=@paysave/web -- --coverage",
+    "test:e2e": "playwright test",
+    "test:integration": "npm run test --workspace=@paysave/web -- integration.test.ts",
+    "test:unit": "npm run test:architecture && npm run test:operations && npm run test --workspace=@paysave/web -- --exclude='**/*.integration.test.ts' && npm run test --workspace=@paysave/observability && npm run test --workspace=@paysave/security && npm run test --workspace=@paysave/testing && npm run test --workspace=@paysave/ui",
+    "test:workspaces": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "validate:deployment-manifest": "node scripts/ci/validate-deployment-manifest.mjs deploy/deployment-manifest.json --allow-template",
+    "validate:alert-rules": "docker run --rm --entrypoint=/bin/promtool -v \"$PWD/ops/observability:/rules:ro\" prom/prometheus@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996 check rules /rules/paysave-staging-alerts.yml",
+    "validate:staging-runtime": "node scripts/ci/validate-staging-runtime.mjs",
+    "validate:runtime-container": "node scripts/ci/check-runtime-container.mjs",
+    "validate:openapi": "redocly lint docs/api/openapi.yaml docs/api/openapi-recovery-core.yaml --config redocly.yaml",
+    "validate:production-runtime": "node scripts/ci/validate-production-runtime.mjs",
+    "verify:database": "bash scripts/ci/verify-database.sh"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "postcss": "8.5.20",
+    "sharp": "0.35.0"
+  },
+  "overrides": {
+    "postcss": "$postcss",
+    "sharp": "$sharp",
+    "next": {
+      "postcss": "$postcss",
+      "sharp": "$sharp"
+    }
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1",
+    "@redocly/cli": "2.40.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "playwright": "1.61.1",
+    "prettier": "3.9.5",
+    "prettier-plugin-tailwindcss": "0.8.1"
+  }
+}
