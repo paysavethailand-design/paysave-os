@@ -1,0 +1,37 @@
+{
+  "name": "paysave-hostinger-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('prebuilt standalone runtime')\"",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.4.0",
+    "@supabase/ssr": "0.12.3",
+    "@supabase/supabase-js": "2.110.7",
+    "@tanstack/react-query": "5.101.4",
+    "@tanstack/react-table": "8.21.3",
+    "next": "15.5.21",
+    "next-themes": "0.4.6",
+    "pg": "8.16.3",
+    "postcss": "8.5.20",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-hook-form": "7.82.0",
+    "recharts": "3.10.0",
+    "sharp": "0.35.0",
+    "zod": "4.4.3"
+  },
+  "overrides": {
+    "postcss": "$postcss",
+    "sharp": "$sharp",
+    "next": {
+      "postcss": "$postcss",
+      "sharp": "$sharp"
+    }
+  }
+}
