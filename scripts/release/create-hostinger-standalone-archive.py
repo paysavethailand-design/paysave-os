@@ -36,11 +36,21 @@ def copy_runtime(root: Path, staging: Path) -> Path:
         standalone,
         staging,
         symlinks=False,
-        ignore=shutil.ignore_patterns("node_modules"),
     )
     for root_manifest in (staging / "package.json", staging / "package-lock.json"):
         root_manifest.unlink(missing_ok=True)
     runtime_app = staging / "apps/web"
+    # Include the standalone node_modules inside apps/web so the final
+    # ZIP under root_directory has a true self-contained node_modules/next.
+    # This makes the package a proper Next.js standalone deployment artifact.
+    nm_src = staging / "node_modules"
+    if nm_src.is_dir():
+        nm_dst = runtime_app / "node_modules"
+        if nm_dst.exists():
+            shutil.rmtree(nm_dst)
+        shutil.copytree(nm_src, nm_dst)
+        # Remove top-level copy to keep archive structure clean under apps/web
+        shutil.rmtree(nm_src)
     shutil.copytree(static, runtime_app / ".next/static", dirs_exist_ok=True)
     if public.is_dir():
         shutil.copytree(public, runtime_app / "public", dirs_exist_ok=True)
