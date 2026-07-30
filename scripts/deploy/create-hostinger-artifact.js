@@ -100,7 +100,8 @@ async function main() {
   }
 
   pkg.scripts = pkg.scripts || {};
-  pkg.scripts.start = 'node server.js';
+  pkg.scripts.start = "node server.js";
+  pkg.scripts.build = "echo \"Pre-built standalone Next.js artifact - skipping rebuild (no next build will run)\" || true";
   delete pkg.workspaces; // ensure no workspace resolution
   // Transform local @paysave/* deps to "file:./packages/..." references.
   // This allows "cd deploy/hostinger && npm install && npm start" to work
@@ -143,17 +144,17 @@ This directory is a **self-contained, flattened standalone Next.js project**.
 - No monorepo root, no workspaces required.
 - Run with: node server.js  (or npm start after ensuring node_modules)
 
-## Hostinger Settings (recommended)
-- Framework: Next.js
-- Root Directory: .   (or the folder containing this artifact)
+## Hostinger Settings (PRE-BUILT STANDALONE - DO NOT REBUILD)
+- Framework: Next.js (or Custom / Node.js)
+- Root Directory: .   (the folder with server.js at top level)
 - Node.js: 22
-- Build command: next build   (or leave default; this artifact is pre-built)
+- Build command: :     (colon = shell no-op)   OR   echo "pre-built - skip next build"
 - Output directory: .next
-- Startup / Entry: server.js (or the start script)
+- Startup command: node server.js   (or npm start)
+- IMPORTANT: Do NOT let Hostinger run "next build". The artifact is already built.
+  Using the no-op prevents unnecessary rebuilds and preserves the traced standalone output.
 
-Upload as ZIP or via Git. The artifact is ready for the managed runtime.
-
-Generated: ${new Date().toISOString()}
+Generated: 2026-07-30T03:38:54.341Z
 `;
   fs.writeFileSync(path.join(ARTIFACT_DIR, 'HOSTINGER_DEPLOY.md'), note);
 

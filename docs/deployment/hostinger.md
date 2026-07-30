@@ -14,24 +14,25 @@ A deployment-only artifact is generated that is a self-contained, flat standalon
 ## One-time Setup
 No changes needed to source or logic.
 
-## Local Build
+## Local Artifact Generation (Pre-built)
 ```bash
 npm run deploy:hostinger
 # or
 npm run deploy
 ```
 
-This:
-1. Ensures `npm run build` (via the monorepo).
-2. Uses the standalone output from `apps/web/.next/standalone`.
-3. Flattens the nested structure so `server.js` is at the artifact root.
-4. Vendors the local `@paysave/*` packages into `node_modules/@paysave/*`.
-5. Patches `package.json` (removes workspaces, sets `start: "node server.js"`).
-6. Verifies the artifact can start and serve requests independently.
+This produces `deploy/hostinger/` containing:
+- Pre-built `.next/` (from monorepo `next build`)
+- `server.js` (standalone entrypoint)
+- Vendored local packages + dependencies
+- `package.json` with:
+  - `start: "node server.js"`
+  - `build: "echo ... skipping rebuild ..."` (no-op to protect against accidental rebuilds)
 
-**Output:** `deploy/hostinger/`
+**The artifact is already compiled. No `next build` should ever run on Hostinger.**
 
-The directory is a complete, runnable Next.js project.
+## GitHub Actions
+The workflow automatically generates the pre-built tar.gz.
 
 ## GitHub Actions
 The workflow `.github/workflows/hostinger-artifact.yml` automatically:
@@ -41,43 +42,41 @@ The workflow `.github/workflows/hostinger-artifact.yml` automatically:
 
 Download the tar.gz from the Actions run → Artifacts.
 
-## Deploying to Hostinger
+## Deploying to Hostinger (Pre-built Standalone Mode)
 
-### Recommended Settings (hPanel / Web Apps)
-- **Framework**: Next.js
-- **Root Directory**: `.` (or the root of the extracted artifact)
+**Goal on Hostinger: Run only `npm install` then `npm start` / `node server.js`**.  
+Do **not** run `next build` — the application is pre-compiled.
+
+### Critical Hostinger Settings (hPanel / Web Apps / Node.js)
+
+- **Framework**: Next.js (or "Custom" / "Node.js" if Next.js option forces a build)
+- **Root Directory**: `.` (must contain `server.js` at the top level of the uploaded folder)
 - **Node.js**: 22
-- **Build command**: `next build` (the artifact is pre-built; you can leave the default or use a no-op if supported)
-- **Output directory**: `.next`
-- **Startup / Entry file**: `server.js` (or use the `start` script)
+- **Build command**: `:`   (colon = no-op / do nothing)  
+  **Alternative**: `echo "Pre-built standalone - skipping next build"`
+  **Why?** This prevents Hostinger from re-running Next.js build on every deploy.
+- **Output directory**: `.next` (or leave default)
+- **Startup command** (preferred): `node server.js`  
+  **Alternative**: `npm start`
 
-### Upload Methods
-1. **ZIP upload** (easiest for one-off):
-   - Zip the contents of `deploy/hostinger/` (or the whole folder).
-   - Upload the ZIP in Hostinger.
-   - Set Root Directory to the folder containing `server.js`.
+**After upload/extract, the only commands Hostinger should execute are:**
+1. `npm install`
+2. `node server.js` (or `npm start`)
 
-2. **Git**:
-   - Push the artifact contents to a deployment branch or separate repo if desired (not required).
+### Upload Steps
+1. Download the artifact tar.gz from GitHub Actions (or run `npm run deploy` locally and zip `deploy/hostinger/`).
+2. Extract the archive.
+3. Upload the **contents** (or the folder) to Hostinger.
+4. Confirm `server.js` is directly visible in the Root Directory.
+5. Set the Build command to the no-op shown above.
+6. Set the three required `NEXT_PUBLIC_*` environment variables.
+7. Deploy / Restart.
 
-3. **Actions artifact**:
-   - Download the tar.gz from the workflow.
-   - Extract and upload.
-
-### Environment Variables (Hostinger)
-Set the required public variables (at minimum):
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-
-Other secrets (Supabase service role, etc.) as needed for your backend.
-
-**Important**: The dummy values used only during local verification are not sufficient for production.
-
-### Verification After Deploy
-- The app should respond on `/`.
-- `/healthz` should return 200 (liveness).
-- `/readyz` will return 503 until all production readiness conditions are met (by design — fail-closed).
+### Verification that No Rebuild Occurs
+- In Hostinger deployment logs, you should **not** see "Compiling...", "Creating an optimized production build", or Next.js build output.
+- You should see "Ready in Xms" shortly after "npm install" / start.
+- The `build` script in the deployed `package.json` is a no-op echo.
+- `.next/` contents (e.g. BUILD_ID or server chunks) remain exactly as generated in the monorepo.
 
 ## How the Flattening Works (Maintainable Details)
 - `outputFileTracingRoot` in `apps/web/next.config.ts` ensures local workspace packages are traced during build.

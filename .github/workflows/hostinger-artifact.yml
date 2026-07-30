@@ -1,4 +1,4 @@
-name: Hostinger Deploy Artifact (Flatten for Deployment)
+name: Hostinger Pre-built Standalone Artifact
 
 on:
   workflow_dispatch:
@@ -31,6 +31,17 @@ jobs:
 
       - run: npm run deploy:hostinger
 
+      - name: Verify pre-built (no rebuild in artifact)
+        run: |
+          cd deploy/hostinger
+          node -e '
+            const p = require("./package.json");
+            if (!p.scripts.build.includes("skip")) { process.exit(1); }
+            console.log("Build script is no-op for Hostinger pre-built mode");
+            if (!require("fs").existsSync(".next")) { process.exit(1); }
+            console.log("Pre-built .next present - no rebuild will occur on target");
+          '
+
       - name: Package artifact
         run: |
           cd deploy/hostinger
@@ -46,7 +57,9 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Hostinger Deploy Artifact" >> $GITHUB_STEP_SUMMARY
-          echo "Artifact built successfully from commit ${{ github.sha }}." >> $GITHUB_STEP_SUMMARY
-          echo "Download the tar.gz from the Artifacts tab and upload to Hostinger (or extract and use as source)." >> $GITHUB_STEP_SUMMARY
-          echo "See docs/deployment/hostinger.md for instructions." >> $GITHUB_STEP_SUMMARY
+          echo "## Hostinger Pre-built Standalone Artifact" >> $GITHUB_STEP_SUMMARY
+          echo "Artifact is PRE-BUILT (standalone with .next and server.js)." >> $GITHUB_STEP_SUMMARY
+          echo "**CRITICAL for Hostinger: Set Build command to a no-op** (e.g. `:` or `echo pre-built`)" >> $GITHUB_STEP_SUMMARY
+          echo "This prevents next build from running on deployment." >> $GITHUB_STEP_SUMMARY
+          echo "Startup: node server.js (preferred) or npm start" >> $GITHUB_STEP_SUMMARY
+          echo "See docs/deployment/hostinger.md" >> $GITHUB_STEP_SUMMARY
