@@ -6,7 +6,7 @@ export function DashboardError({ reset }: { readonly reset: () => void }) {
     <DashboardShell>
       <ErrorState
         actionLabel="ลองใหม่"
-        description="ไม่สามารถแสดง Mock Dashboard ได้ กรุณาลองโหลดข้อมูลจำลองใหม่"
+        description="ไม่สามารถโหลด Dashboard จาก Supabase ได้ กรุณาตรวจสอบการเชื่อมต่อหรือลองใหม่อีกครั้ง"
         onAction={reset}
         title="เกิดข้อผิดพลาดในการแสดงผล"
       />

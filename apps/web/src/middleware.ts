@@ -1,13 +1,8 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { updateSession } from "@/features/auth/server";
-import { isMockFrontendPath } from "@/features/frontend-dashboard/server";
 
-/** Refreshes Supabase sessions and protects application routes. */
+/** Refreshes Supabase sessions and protects application routes with real Supabase Auth. */
 export async function middleware(request: NextRequest) {
-  if (isMockFrontendPath(request.nextUrl.pathname)) {
-    return NextResponse.next();
-  }
   return updateSession(request);
 }
 

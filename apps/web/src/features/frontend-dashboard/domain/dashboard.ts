@@ -29,7 +29,7 @@ export interface ActivityRow {
   readonly updatedAt: string;
 }
 export interface DashboardModel {
-  readonly source: "mock";
+  readonly source: "live" | "mock";
   readonly persona: DashboardPersona;
   readonly eyebrow: string;
   readonly title: string;
@@ -41,4 +41,19 @@ export interface DashboardModel {
 }
 export function isDashboardPersona(value: string): value is DashboardPersona {
   return dashboardPersonas.includes(value as DashboardPersona);
+}
+
+
+import type { RoleCode } from "@paysave/security";
+
+export const DASHBOARD_PERSONA_ROLES: Record<DashboardPersona, readonly RoleCode[]> = {
+  executive: ["super_admin", "admin"],
+  admin: ["admin", "super_admin"],
+  partner: ["partner"],
+  field: ["supervisor", "agent"],
+} as const;
+
+export function canAccessDashboard(persona: DashboardPersona, roles: readonly RoleCode[]): boolean {
+  const allowed = DASHBOARD_PERSONA_ROLES[persona] ?? [];
+  return roles.some((r) => allowed.includes(r));
 }

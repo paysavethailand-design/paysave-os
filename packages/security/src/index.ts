@@ -6,7 +6,7 @@ export {
   type PermissionCode,
   type RoleCode,
 } from "./auth-context";
-export { hasAnyPermission, hasEveryPermission, hasPermission } from "./authorization";
+export { hasAnyPermission, hasEveryPermission, hasPermission, hasRole, hasAnyRole, hasEveryRole } from "./authorization";
 export {
   SecurityComplianceValidator,
   createSecurityReviewReadModel,

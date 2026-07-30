@@ -153,7 +153,7 @@ const models: Record<DashboardPersona, Omit<DashboardModel, "source" | "persona"
     })),
   },
 };
-/** In-memory dashboard adapter. It has no network, Supabase or database dependency. */
+/** Legacy in-memory mock adapter (kept for reference/tests). Production uses SupabaseDashboardRepository with live queries. */
 export class MockDashboardRepository implements DashboardRepository {
   async getDashboard(persona: DashboardPersona): Promise<DashboardModel> {
     return { source: "mock", persona, ...structuredClone(models[persona]) };

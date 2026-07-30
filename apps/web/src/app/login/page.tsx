@@ -1,13 +1,13 @@
-import { MockLoginForm } from "@/features/frontend-dashboard";
+import { SignInForm, getSafeRedirectPath } from "@/features/auth";
 import { Badge, Card, CardContent, CardDescription, CardHeader } from "@paysave/ui";
 import { BarChart3, CheckCircle2, Layers3, ShieldCheck, type LucideIcon } from "lucide-react";
 
-export const metadata = { title: "Mock Login | PAYSAVE OS" };
+export const metadata = { title: "เข้าสู่ระบบ | PAYSAVE OS" };
 
 const capabilities: readonly { icon: LucideIcon; label: string }[] = [
   { icon: BarChart3, label: "4 role dashboards" },
   { icon: Layers3, label: "Feature-first UI" },
-  { icon: ShieldCheck, label: "No live connection" },
+  { icon: ShieldCheck, label: "Live Supabase" },
   { icon: CheckCircle2, label: "Accessible & responsive" },
 ];
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
         </div>
         <div className="relative max-w-xl">
           <Badge className="border-white/10 bg-white/8 text-slate-200" variant="neutral">
-            FRONTEND SPRINT #1
+            LIVE INTEGRATION
           </Badge>
           <h1 className="mt-6 text-5xl leading-[1.12] font-semibold tracking-tight">
             ตัดสินใจเร็วขึ้น
@@ -38,8 +38,7 @@ export default function LoginPage() {
             <span className="text-sky-300">จากภาพรวมที่ชัดเจน</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
-            Executive-grade dashboards สำหรับผู้บริหาร Partner Admin และทีมภาคสนาม — ทำงานด้วย Mock
-            Data 100%
+            Executive-grade dashboards สำหรับผู้บริหาร Partner Admin และทีมภาคสนาม — เชื่อมต่อกับ Supabase จริง
           </p>
           <div className="mt-9 grid gap-3 sm:grid-cols-2">
             {capabilities.map(({ icon: Icon, label }) => (
@@ -54,7 +53,7 @@ export default function LoginPage() {
           </div>
         </div>
         <p className="relative text-xs text-slate-400">
-          Mock environment · No Supabase · No Database
+          เชื่อมต่อ Supabase Auth และฐานข้อมูลจริง
         </p>
       </section>
       <section className="flex items-center justify-center px-4 py-10 sm:px-8">
@@ -67,13 +66,13 @@ export default function LoginPage() {
               <b>PAYSAVE</b>
             </div>
             <Badge className="w-fit" variant="neutral">
-              MOCK WORKSPACE
+              PAYSAVE OS
             </Badge>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight">ยินดีต้อนรับ</h2>
-            <CardDescription>เข้าสู่ระบบจำลองเพื่อดู Dashboard ทั้ง 4 บทบาท</CardDescription>
+            <CardDescription>ใช้บัญชีที่ได้รับอนุญาตจากผู้ดูแลระบบ</CardDescription>
           </CardHeader>
           <CardContent>
-            <MockLoginForm />
+            <SignInForm nextPath={getSafeRedirectPath(undefined)} />
           </CardContent>
         </Card>
       </section>

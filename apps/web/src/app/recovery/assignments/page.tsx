@@ -1,4 +1,8 @@
 import { AssignmentView } from "@/features/recovery-management";
-export default function RecoveryAssignmentsPage() {
+import { requirePermission } from "@/features/auth/server";
+import { RECOVERY_PERMISSIONS } from "@/features/recovery-core/domain/codes";
+
+export default async function RecoveryAssignmentsPage() {
+  await requirePermission(RECOVERY_PERMISSIONS.ASSIGNMENTS_READ, "/recovery/assignments");
   return <AssignmentView />;
 }

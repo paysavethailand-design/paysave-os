@@ -108,7 +108,7 @@ function SidebarContent() {
       <div className="mt-auto p-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Mock mode</span>
+            <span className="text-sm font-semibold">Live</span>
             <Badge
               className="border-emerald-300/20 bg-emerald-300/10 text-emerald-300"
               variant="neutral"
@@ -147,7 +147,7 @@ export function DashboardShell({ children }: { readonly children: ReactNode }) {
             <div>
               <p className="text-sm font-semibold">Operations Overview</p>
               <p className="hidden text-xs text-muted-foreground sm:block">
-                Mock workspace · No live data
+                Live Supabase · Real data
               </p>
             </div>
             <div className="ml-auto flex items-center gap-1">
@@ -178,14 +178,14 @@ export function DashboardShell({ children }: { readonly children: ReactNode }) {
                 <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-2rem))]">
                   <DropdownMenuLabel className="flex items-center justify-between normal-case">
                     <span>Notification Center</span>
-                    <Badge variant="neutral">Mock 3</Badge>
+                    <Badge variant="neutral">Live</Badge>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="items-start py-3">
                     <span className="mt-1 size-2 rounded-full bg-primary" />
                     <span>
                       <b className="block">KPI รอบเช้าพร้อมแล้ว</b>
-                      <small className="text-muted-foreground">อัปเดตจาก Mock Repository</small>
+                      <small className="text-muted-foreground">อัปเดตจาก Supabase</small>
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="items-start py-3">

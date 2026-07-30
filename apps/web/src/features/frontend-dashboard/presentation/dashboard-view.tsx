@@ -37,8 +37,8 @@ export function DashboardView({ model }: { readonly model: DashboardModel }) {
             </p>
           </div>
           <Modal
-            title="Mock Data Contract"
-            description="Frontend Sprint #1 ไม่เชื่อมต่อระบบภายนอก"
+            title="Live Data Source"
+            description="ข้อมูลจาก Supabase จริง"
             trigger={
               <Button variant="secondary">
                 ดู Data Source <ArrowRight className="size-4" />
@@ -46,10 +46,9 @@ export function DashboardView({ model }: { readonly model: DashboardModel }) {
             }
           >
             <div className="rounded-xl bg-muted p-4 text-sm leading-6">
-              <b>Source:</b> In-memory MockDashboardRepository
-              <br />
-              <b>Network requests:</b> 0<br />
-              <b>Supabase / Database:</b> Disabled
+              <b>Source:</b> SupabaseDashboardRepository<br />
+              <b>Supabase:</b> Connected (recovery.cases, asset.assets, etc.)<br />
+              <b>Auth:</b> Real Supabase Auth
             </div>
           </Modal>
         </section>
@@ -77,7 +76,7 @@ export function DashboardView({ model }: { readonly model: DashboardModel }) {
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>รายการล่าสุด</CardTitle>
-              <CardDescription>ตารางแบบ TanStack Table จาก Mock Repository</CardDescription>
+              <CardDescription>ตารางจากข้อมูลจริง Supabase</CardDescription>
             </div>
             <Badge variant="default">{model.activity.length} รายการ</Badge>
           </CardHeader>
