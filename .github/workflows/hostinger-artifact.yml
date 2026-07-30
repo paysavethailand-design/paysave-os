@@ -1,0 +1,52 @@
+name: Hostinger Deploy Artifact (Flatten for Deployment)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'scripts/deploy/**'
+      - '.github/workflows/hostinger-artifact.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm run deploy:hostinger
+
+      - name: Package artifact
+        run: |
+          cd deploy/hostinger
+          tar -czf ../../hostinger-deploy-artifact.tar.gz .
+          ls -lh ../../hostinger-deploy-artifact.tar.gz
+
+      - name: Upload Hostinger artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-deploy-artifact-${{ github.sha }}
+          path: hostinger-deploy-artifact.tar.gz
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "## Hostinger Deploy Artifact" >> $GITHUB_STEP_SUMMARY
+          echo "Artifact built successfully from commit ${{ github.sha }}." >> $GITHUB_STEP_SUMMARY
+          echo "Download the tar.gz from the Artifacts tab and upload to Hostinger (or extract and use as source)." >> $GITHUB_STEP_SUMMARY
+          echo "See docs/deployment/hostinger.md for instructions." >> $GITHUB_STEP_SUMMARY

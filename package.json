@@ -10,6 +10,8 @@
     "architecture:check": "node scripts/check-architecture.mjs && node scripts/security-review-evidence.mjs",
     "audit:dependencies": "node --test scripts/ci/check-dependency-baseline.test.mjs scripts/ci/check-runtime-container.test.mjs && npm audit --audit-level=high && node scripts/ci/check-dependency-baseline.mjs && node scripts/ci/check-runtime-container.mjs",
     "build": "npm run build --workspace=@paysave/web",
+    "deploy": "node scripts/deploy/create-hostinger-artifact.js",
+    "deploy:hostinger": "node scripts/deploy/create-hostinger-artifact.js",
     "beta:gate": "node scripts/ci/evaluate-beta-gate.mjs docs/operational-readiness/BETA_GATE_EVIDENCE.json",
     "ci:no-deploy": "node scripts/ci/check-no-deploy.mjs",
     "dev": "npm run dev --workspace=@paysave/web",
