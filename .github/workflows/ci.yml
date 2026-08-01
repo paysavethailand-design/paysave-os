@@ -3,7 +3,7 @@ name: PAYSAVE OS CI
 on:
   pull_request:
   push:
-    branches: [develop, main, feature/supabase-migrations]
+    branches: [develop, main]
   workflow_dispatch:
 
 concurrency:
