@@ -38,7 +38,8 @@ export default function LoginPage() {
             <span className="text-sky-300">จากภาพรวมที่ชัดเจน</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
-            Executive-grade dashboards สำหรับผู้บริหาร Partner Admin และทีมภาคสนาม — เชื่อมต่อกับ Supabase จริง
+            Executive-grade dashboards สำหรับผู้บริหาร Partner Admin และทีมภาคสนาม — เชื่อมต่อกับ
+            Supabase จริง
           </p>
           <div className="mt-9 grid gap-3 sm:grid-cols-2">
             {capabilities.map(({ icon: Icon, label }) => (
@@ -52,9 +53,7 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="relative text-xs text-slate-400">
-          เชื่อมต่อ Supabase Auth และฐานข้อมูลจริง
-        </p>
+        <p className="relative text-xs text-slate-400">เชื่อมต่อ Supabase Auth และฐานข้อมูลจริง</p>
       </section>
       <section className="flex items-center justify-center px-4 py-10 sm:px-8">
         <Card className="w-full max-w-md" variant="glass">

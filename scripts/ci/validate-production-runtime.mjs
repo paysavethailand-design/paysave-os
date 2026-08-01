@@ -149,7 +149,8 @@ export function evaluateProductionRuntime(env) {
     if (!isPg && !validSecretRef(dbUrl)) {
       failures.push({
         name: "DATABASE_URL",
-        reason: "when present must be a postgresql:// connection string or approved Secret Manager reference",
+        reason:
+          "when present must be a postgresql:// connection string or approved Secret Manager reference",
       });
     }
   }

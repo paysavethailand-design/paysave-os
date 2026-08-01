@@ -395,4 +395,5 @@ export class MockRecoveryRepository implements RecoveryRepository {
     });
   }
 }
+
 export const recoveryRepository = new MockRecoveryRepository();

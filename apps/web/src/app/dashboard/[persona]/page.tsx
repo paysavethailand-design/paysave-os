@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { requireAuth } from "@/features/auth/server";
-import { 
-  dashboardPersonas, 
-  FrontendDashboardPage, 
-  isDashboardPersona, 
-  canAccessDashboard 
+import {
+  dashboardPersonas,
+  FrontendDashboardPage,
+  isDashboardPersona,
+  canAccessDashboard,
 } from "@/features/frontend-dashboard";
 
 interface PageProps {

@@ -43,7 +43,6 @@ export function isDashboardPersona(value: string): value is DashboardPersona {
   return dashboardPersonas.includes(value as DashboardPersona);
 }
 
-
 import type { RoleCode } from "@paysave/security";
 
 export const DASHBOARD_PERSONA_ROLES: Record<DashboardPersona, readonly RoleCode[]> = {
