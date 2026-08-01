@@ -65,11 +65,11 @@ export function MockLoginForm() {
         ) : null}
       </div>
       <Button className="h-12 w-full" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "กำลังเปิด Demo..." : "เข้าสู่ Mock Workspace"}
+        {isSubmitting ? "กำลังเปิด Demo..." : "เข้าสู่ระบบ"}
         <ArrowRight className="size-4" />
       </Button>
       <p className="text-center text-xs leading-5 text-muted-foreground">
-        ปุ่มนี้นำไปยัง Dashboard จำลองเท่านั้น ไม่มีการส่งข้อมูลออกจาก Browser
+        เข้าสู่แดชบอร์ดจริงจาก Supabase
       </p>
     </form>
   );

@@ -1,4 +1,5 @@
 import type { RecoveryRepository } from "../../application/ports/recovery-repository";
+import { SupabaseRecoveryRepository } from "@/features/recovery/infrastructure/repositories/supabase-recovery-repository";
 import type {
   AddContactInput,
   ApprovalInput,
@@ -395,4 +396,11 @@ export class MockRecoveryRepository implements RecoveryRepository {
     });
   }
 }
-export const recoveryRepository = new MockRecoveryRepository();
+
+
+export const recoveryRepository = isMockMode ? new MockRecoveryRepository() : new SupabaseRecoveryRepository();
+
+
+const isMockMode = typeof process !== "undefined" && (process.env.NODE_ENV === "development" || process.env.USE_MOCK === "true");
+export const recoveryRepository = isMockMode ? new MockRecoveryRepository() : new SupabaseRecoveryRepository();
+
