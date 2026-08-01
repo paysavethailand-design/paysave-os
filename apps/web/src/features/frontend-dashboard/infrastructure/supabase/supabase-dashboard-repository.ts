@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAuthContext } from "@/features/auth/infrastructure/supabase/get-auth-context";
-import type { RoleCode } from "@paysave/security";
+import { parsePaysaveClaims, type RoleCode } from "@paysave/security";
 import { DASHBOARD_PERSONA_ROLES } from "../../domain/dashboard";
-import { createClient as createAuthServerClient } from "@/features/auth/infrastructure/supabase/server-client";
+import { createClient as createAuthBrowserClient } from "@/features/auth/infrastructure/supabase/browser-client";
 import type { DashboardRepository } from "../../application/ports/dashboard-repository";
 import type {
   ActivityRow,
@@ -28,6 +27,14 @@ const DEFAULT_DISTRIBUTION: readonly DistributionPoint[] = [
   { name: "ต้องติดตาม", value: 10, color: "#b54708" },
 ];
 
+type RecentCaseRow = {
+  readonly id: unknown;
+  readonly partner_id: unknown;
+  readonly status_id: unknown;
+  readonly updated_at: string | null;
+  readonly business_object_id: unknown;
+};
+
 /**
  * Live Supabase-backed DashboardRepository.
  * Queries real data from recovery.cases, asset.assets, and auth/users where available.
@@ -38,7 +45,7 @@ export class SupabaseDashboardRepository implements DashboardRepository {
 
   private async getClient(): Promise<SupabaseClient> {
     if (!this.client) {
-      this.client = await createAuthServerClient();
+      this.client = createAuthBrowserClient();
     }
     return this.client;
   }
@@ -47,12 +54,16 @@ export class SupabaseDashboardRepository implements DashboardRepository {
     const client = await this.getClient();
 
   // Defense-in-depth role check (primary is route guard + RLS)
-  const ctx = await getAuthContext();
+  const { data: claimsData, error: claimsError } = await client.auth.getClaims();
+  let ctx = null;
+  if (!claimsError && claimsData?.claims) {
+    try {
+      ctx = parsePaysaveClaims(claimsData.claims);
+    } catch {
+      ctx = null;
+    }
+  }
   if (ctx) {
-
-// Use active partner for tenant scoping (RLS primary, explicit for safety)
-const partnerFilter = ctx?.activePartnerId ? { partner_id: ctx.activePartnerId } : {};
-
     const allowed = DASHBOARD_PERSONA_ROLES[persona] ?? [];
     const hasAccess = ctx.roles.some((r: RoleCode) => allowed.includes(r));
     if (!hasAccess) {
@@ -107,7 +118,7 @@ const partnerFilter = ctx?.activePartnerId ? { partner_id: ctx.activePartnerId }
         .limit(4);
 
       if (recentCases && recentCases.length > 0) {
-        recentActivity = recentCases.map((c: any, idx: number) => ({
+        recentActivity = (recentCases as RecentCaseRow[]).map((c, idx: number) => ({
           id: String(c.id ?? `RC-${idx}`),
           title: c.business_object_id ? String(c.business_object_id) : `Case ${c.id}`,
           category: "Recovery",
