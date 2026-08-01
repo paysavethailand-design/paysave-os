@@ -46,10 +46,14 @@ docker run --detach --rm --name "${CONTAINER_NAME}" \
   "${image}" >/dev/null
 
 for attempt in $(seq 1 45); do
-  if docker exec "${CONTAINER_NAME}" pg_isready -U postgres -d "${DATABASE_NAME}" >/dev/null 2>&1; then
+  database_ready="$(
+    docker exec "${CONTAINER_NAME}" psql -Atq -U postgres -d postgres \
+      -c "SELECT 1 FROM pg_database WHERE datname = '${DATABASE_NAME}'" 2>/dev/null || true
+  )"
+  if [[ "${database_ready}" == "1" ]]; then
     break
   fi
-  [[ "${attempt}" -lt 45 ]] || { echo "ERROR: PostgreSQL did not become ready" >&2; exit 1; }
+  [[ "${attempt}" -lt 45 ]] || { echo "ERROR: PostgreSQL database did not become ready" >&2; exit 1; }
   sleep 1
 done
 
