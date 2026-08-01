@@ -7,14 +7,16 @@ const read = (name: string) => readFileSync(resolve(root, name), "utf8");
 
 describe("Supabase client module boundaries", () => {
   it("keeps next/headers out of repositories imported by pages and components", () => {
-    const repository = read("../../../frontend-dashboard/infrastructure/supabase/supabase-dashboard-repository.ts");
-    expect(repository).toContain("auth/infrastructure/supabase/browser-client");
+    const repository = read(
+      "../../../frontend-dashboard/infrastructure/supabase/supabase-dashboard-repository.ts",
+    );
+    expect(repository).toContain("@/shared/supabase/browser-client");
     expect(repository).not.toContain("auth/infrastructure/supabase/server-client");
     expect(repository).not.toContain("get-auth-context");
   });
 
   it("keeps browser-client free from Server Component APIs", () => {
-    const browserClient = read("browser-client.ts");
+    const browserClient = read("../../../../shared/supabase/browser-client.ts");
     expect(browserClient).toContain("createBrowserClient");
     expect(browserClient).not.toContain("next/headers");
   });

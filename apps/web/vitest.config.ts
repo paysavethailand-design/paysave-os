@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "server-only": fileURLToPath(new URL("./vitest.server-only.ts", import.meta.url)),
     },
   },
   test: {
@@ -18,7 +19,7 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       provider: "v8",
       reporter: ["text", "json-summary", "html", "lcov"],
-      reportsDirectory: "../../artifacts/coverage",
+      reportsDirectory: "coverage",
       thresholds: {
         branches: 50,
         functions: 50,

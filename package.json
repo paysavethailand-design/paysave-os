@@ -17,6 +17,7 @@
     "dev": "npm run dev --workspace=@paysave/web",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "generate:deployment-manifest": "node scripts/ci/generate-deployment-manifest-template.mjs",
     "lint": "npm run lint --workspaces --if-present",
     "production:gate": "node scripts/ci/evaluate-production-gate.mjs artifacts/production-readiness/stage5-5/PRODUCTION_GATE_EVIDENCE.json",
     "test": "npm run test:architecture && npm run test:operations && npm run test:workspaces",

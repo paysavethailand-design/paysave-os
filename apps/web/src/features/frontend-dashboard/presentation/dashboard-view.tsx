@@ -46,8 +46,10 @@ export function DashboardView({ model }: { readonly model: DashboardModel }) {
             }
           >
             <div className="rounded-xl bg-muted p-4 text-sm leading-6">
-              <b>Source:</b> SupabaseDashboardRepository<br />
-              <b>Supabase:</b> Connected (recovery.cases, asset.assets, etc.)<br />
+              <b>Source:</b> SupabaseDashboardRepository
+              <br />
+              <b>Supabase:</b> Connected (recovery.cases, asset.assets, etc.)
+              <br />
               <b>Auth:</b> Real Supabase Auth
             </div>
           </Modal>

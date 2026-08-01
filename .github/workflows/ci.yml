@@ -53,6 +53,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run generate:deployment-manifest
       - run: mkdir -p artifacts/test-results && set -o pipefail && npm run test:unit | tee artifacts/test-results/unit.log
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -96,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
-          path: artifacts/coverage
+          path: apps/web/coverage
           if-no-files-found: error
           retention-days: 30
 
@@ -150,6 +151,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run generate:deployment-manifest
       - run: npm run validate:openapi
       - run: npm run validate:deployment-manifest
       - run: npm run ci:no-deploy
@@ -190,6 +192,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run generate:deployment-manifest
       - id: meta
         run: echo "image-reference=paysave-os:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
       - run: |
