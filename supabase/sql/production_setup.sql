@@ -185,32 +185,96 @@ CREATE TABLE IF NOT EXISTS incidents (
 -- =============================================
 -- 4. FOREIGN KEYS (after all tables)
 -- =============================================
-ALTER TABLE employees
-    ADD CONSTRAINT IF NOT EXISTS fk_employees_partner FOREIGN KEY (partner_id) REFERENCES partners(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_employees_partner') THEN
+    ALTER TABLE employees ADD CONSTRAINT fk_employees_partner FOREIGN KEY (partner_id) REFERENCES partners(id);
+  END IF;
+END $$;
 
-ALTER TABLE recovery_cases
-    ADD CONSTRAINT IF NOT EXISTS fk_recovery_cases_partner FOREIGN KEY (partner_id) REFERENCES partners(id),
-    ADD CONSTRAINT IF NOT EXISTS fk_recovery_cases_employee FOREIGN KEY (assigned_employee_id) REFERENCES employees(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_recovery_cases_partner') THEN
+    ALTER TABLE recovery_cases ADD CONSTRAINT fk_recovery_cases_partner FOREIGN KEY (partner_id) REFERENCES partners(id);
+  END IF;
+END $$;
 
-ALTER TABLE case_assignments
-    ADD CONSTRAINT IF NOT EXISTS fk_case_assignments_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id) ON DELETE CASCADE,
-    ADD CONSTRAINT IF NOT EXISTS fk_case_assignments_employee FOREIGN KEY (employee_id) REFERENCES employees(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_recovery_cases_employee') THEN
+    ALTER TABLE recovery_cases ADD CONSTRAINT fk_recovery_cases_employee FOREIGN KEY (assigned_employee_id) REFERENCES employees(id);
+  END IF;
+END $$;
 
-ALTER TABLE recovery_evidences
-    ADD CONSTRAINT IF NOT EXISTS fk_recovery_evidences_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id) ON DELETE CASCADE,
-    ADD CONSTRAINT IF NOT EXISTS fk_recovery_evidences_employee FOREIGN KEY (captured_by) REFERENCES employees(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_case_assignments_case') THEN
+    ALTER TABLE case_assignments ADD CONSTRAINT fk_case_assignments_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE commissions
-    ADD CONSTRAINT IF NOT EXISTS fk_commissions_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id),
-    ADD CONSTRAINT IF NOT EXISTS fk_commissions_employee FOREIGN KEY (employee_id) REFERENCES employees(id),
-    ADD CONSTRAINT IF NOT EXISTS fk_commissions_partner FOREIGN KEY (partner_id) REFERENCES partners(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_case_assignments_employee') THEN
+    ALTER TABLE case_assignments ADD CONSTRAINT fk_case_assignments_employee FOREIGN KEY (employee_id) REFERENCES employees(id);
+  END IF;
+END $$;
 
-ALTER TABLE notifications
-    ADD CONSTRAINT IF NOT EXISTS fk_notifications_employee FOREIGN KEY (recipient_id) REFERENCES employees(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_recovery_evidences_case') THEN
+    ALTER TABLE recovery_evidences ADD CONSTRAINT fk_recovery_evidences_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE reports
-    ADD CONSTRAINT IF NOT EXISTS fk_reports_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id),
-    ADD CONSTRAINT IF NOT EXISTS fk_reports_employee FOREIGN KEY (generated_by) REFERENCES employees(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_recovery_evidences_employee') THEN
+    ALTER TABLE recovery_evidences ADD CONSTRAINT fk_recovery_evidences_employee FOREIGN KEY (captured_by) REFERENCES employees(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_commissions_case') THEN
+    ALTER TABLE commissions ADD CONSTRAINT fk_commissions_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_commissions_employee') THEN
+    ALTER TABLE commissions ADD CONSTRAINT fk_commissions_employee FOREIGN KEY (employee_id) REFERENCES employees(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_commissions_partner') THEN
+    ALTER TABLE commissions ADD CONSTRAINT fk_commissions_partner FOREIGN KEY (partner_id) REFERENCES partners(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_notifications_employee') THEN
+    ALTER TABLE notifications ADD CONSTRAINT fk_notifications_employee FOREIGN KEY (recipient_id) REFERENCES employees(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_reports_case') THEN
+    ALTER TABLE reports ADD CONSTRAINT fk_reports_case FOREIGN KEY (case_id) REFERENCES recovery_cases(id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_reports_employee') THEN
+    ALTER TABLE reports ADD CONSTRAINT fk_reports_employee FOREIGN KEY (generated_by) REFERENCES employees(id);
+  END IF;
+END $$;
 
 -- =============================================
 -- 5. INDEXES (after tables)
