@@ -510,10 +510,10 @@ BEGIN
       ELSE 'SYSTEM' END;
     INSERT INTO employees (id, full_name, email, phone, role, partner_id, status)
     VALUES (
-      ('e' || LPAD(i::text, 8, '0') || '-0000-0000-0000-000000000000')::uuid,
+      ('e' || LPAD(i::text, 7, '0') || '-0000-0000-0000-000000000000')::uuid,
       'Employee ' || i,
       'emp' || i || '@paysave-demo.co.th',
-      '08' || LPAD(i::text, 8, '0'),
+      '08' || LPAD(i::text, 7, '0'),
       r,
       pid,
       'ACTIVE'
@@ -525,7 +525,7 @@ END $$;
 -- Recovery Cases (1200)
 INSERT INTO recovery_cases (id, contract_number, partner_id, assigned_employee_id, status, priority, amount_due, province, description)
 SELECT 
-  ('c' || LPAD(s::text, 8, '0') || '-0000-0000-0000-000000000000')::uuid,
+  ('c' || LPAD(s::text, 7, '0') || '-0000-0000-0000-000000000000')::uuid,
   'RC' || LPAD(s::text, 7, '0'),
   (SELECT id FROM partners ORDER BY random() LIMIT 1),
   (SELECT id FROM employees WHERE role = 'FIELD' ORDER BY random() LIMIT 1),
