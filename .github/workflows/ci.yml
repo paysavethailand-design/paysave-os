@@ -192,7 +192,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm run generate:deployment-manifest
+      - run: npm run generate:deployment-manifest -- --github-env "$GITHUB_ENV"
       - id: meta
         run: echo "image-reference=paysave-os:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
       - run: |
@@ -202,6 +202,9 @@ jobs:
             --build-arg NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 \
             --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.invalid \
             --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ci_placeholder \
+            --build-arg PAYSAVE_RELEASE_VERSION="$PAYSAVE_RELEASE_VERSION" \
+            --build-arg PAYSAVE_SOURCE_REVISION="$PAYSAVE_SOURCE_REVISION" \
+            --build-arg PAYSAVE_BUILD_TIME="$PAYSAVE_BUILD_TIME" \
             .
       - run: mkdir -p artifacts/build && docker save "${{ steps.meta.outputs.image-reference }}" | gzip -9 > artifacts/build/paysave-os-image.tar.gz
       - run: npm sbom --sbom-format cyclonedx > artifacts/build/npm-sbom.cdx.json

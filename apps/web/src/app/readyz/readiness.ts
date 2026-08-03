@@ -76,9 +76,17 @@ function checkFieldEncryption(environment: NodeJS.ProcessEnv): ReadinessCheck {
 }
 
 function checkReleaseIdentity(environment: NodeJS.ProcessEnv): ReadinessCheck {
-  const version = environmentValue(environment, "PAYSAVE_RELEASE_VERSION");
-  const revision = environmentValue(environment, "PAYSAVE_SOURCE_REVISION");
-  const buildTime = environmentValue(environment, "PAYSAVE_BUILD_TIME");
+  const releaseEnvironment: NodeJS.ProcessEnv = {
+    ...environment,
+    PAYSAVE_RELEASE_VERSION:
+      environment.PAYSAVE_RELEASE_VERSION ?? process.env.PAYSAVE_RELEASE_VERSION,
+    PAYSAVE_SOURCE_REVISION:
+      environment.PAYSAVE_SOURCE_REVISION ?? process.env.PAYSAVE_SOURCE_REVISION,
+    PAYSAVE_BUILD_TIME: environment.PAYSAVE_BUILD_TIME ?? process.env.PAYSAVE_BUILD_TIME,
+  };
+  const version = environmentValue(releaseEnvironment, "PAYSAVE_RELEASE_VERSION");
+  const revision = environmentValue(releaseEnvironment, "PAYSAVE_SOURCE_REVISION");
+  const buildTime = environmentValue(releaseEnvironment, "PAYSAVE_BUILD_TIME");
   const valid = Boolean(
     version &&
     /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(version) &&
