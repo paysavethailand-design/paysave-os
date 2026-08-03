@@ -65,20 +65,16 @@ for (const environment of ["development", "staging", "production"]) {
     `missing ${environment} policy`,
   );
 }
+requireValue(
+  /^[0-9a-f]{40}$/.test(manifest.sourceRevision),
+  "sourceRevision must be a full 40-character commit SHA",
+);
 if (!allowTemplate) {
-  requireValue(
-    /^[0-9a-f]{40}$/.test(manifest.sourceRevision),
-    "sourceRevision must be a full 40-character commit SHA",
-  );
   requireValue(
     /^[0-9a-f]{64}$/.test(manifest.artifact?.sha256),
     "artifact.sha256 must be a 64-character SHA-256 digest",
   );
 } else {
-  requireValue(
-    manifest.sourceRevision === "SET_BY_CI",
-    "template sourceRevision must be SET_BY_CI",
-  );
   requireValue(
     manifest.artifact?.sha256 === "SET_BY_CI",
     "template artifact.sha256 must be SET_BY_CI",
