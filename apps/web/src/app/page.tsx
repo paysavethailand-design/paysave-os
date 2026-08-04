@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-export default function HomePage() {
-  redirect("/login" as Route);
+import { getAuthenticatedLandingRoute } from "@/features/auth";
+import { requireAuth } from "@/features/auth/server";
+
+/** Resolves the verified session to an existing role dashboard. */
+export default async function HomePage() {
+  const context = await requireAuth("/");
+  redirect(getAuthenticatedLandingRoute(context.roles) as Route);
 }

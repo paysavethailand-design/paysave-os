@@ -12,6 +12,12 @@ test.describe("release smoke", () => {
     await expect(page.getByText(/Supabase Session และ JWT Permission/)).toBeVisible();
   });
 
+  test("redirects the legacy login route to the canonical Supabase sign-in", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page.getByRole("heading", { name: "เข้าสู่ระบบ" })).toBeVisible();
+  });
+
   test("Supabase production login has no automatically detectable accessibility violations", async ({
     page,
   }) => {
