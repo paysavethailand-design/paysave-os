@@ -274,6 +274,8 @@ export class SupabaseDashboardRepository implements DashboardRepository {
           },
         ];
       case "field":
+      case "supervisor":
+      case "personal":
         return [
           {
             label: "งานวันนี้",
@@ -321,6 +323,8 @@ export class SupabaseDashboardRepository implements DashboardRepository {
       partner: "PARTNER PERFORMANCE",
       admin: "ADMIN CONTROL",
       field: "FIELD OPERATIONS",
+      supervisor: "SUPERVISOR OPERATIONS",
+      personal: "PERSONAL OPERATIONS",
     };
     return map[persona];
   }
@@ -331,6 +335,8 @@ export class SupabaseDashboardRepository implements DashboardRepository {
       partner: "Partner Operations Dashboard",
       admin: "Identity, access และระบบพร้อมใช้งาน",
       field: "งานวันนี้ ชัดเจน พร้อมออกพื้นที่",
+      supervisor: "ภาพรวมงานทีมและการติดตามภาคสนาม",
+      personal: "งานส่วนตัววันนี้ พร้อมดำเนินการ",
     };
     return map[persona];
   }
@@ -341,6 +347,8 @@ export class SupabaseDashboardRepository implements DashboardRepository {
       partner: "ติดตามสัญญา กระแสเงิน และ SLA ของ Partner จากฐานข้อมูลจริง",
       admin: "ภาพรวมผู้ใช้ สิทธิ์ และกิจกรรมระบบจาก Supabase",
       field: "คิวงาน เส้นทาง และผลการปฏิบัติงานของเจ้าหน้าที่จากข้อมูลจริง",
+      supervisor: "ติดตามคิวงานและผลการปฏิบัติงานของทีมจากข้อมูลจริง",
+      personal: "คิวงานและผลการปฏิบัติงานของคุณจากข้อมูลจริง",
     };
     return map[persona];
   }

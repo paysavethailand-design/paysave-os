@@ -13,6 +13,10 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   try {
     return parsePaysaveClaims(data.claims);
   } catch {
+    console.error("AUTH_CONTEXT_PARSE_FAILED", {
+      category: "claims_parse_error",
+      correlationId: globalThis.crypto.randomUUID(),
+    });
     return null;
   }
 }

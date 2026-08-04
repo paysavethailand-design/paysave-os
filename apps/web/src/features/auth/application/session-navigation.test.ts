@@ -19,7 +19,13 @@ const adminContext: AuthContext = {
 
 describe("resolveSessionRedirect", () => {
   it("redirects unauthenticated protected requests to sign in", () => {
-    expect(resolveSessionRedirect("/dashboard", null)).toBe("/sign-in");
+    expect(resolveSessionRedirect("/", null)).toBe("/sign-in");
+    expect(resolveSessionRedirect("/dashboard/admin", null)).toBe("/sign-in");
+  });
+
+  it("redirects only the legacy login alias while leaving canonical sign-in renderable", () => {
+    expect(resolveSessionRedirect("/login", null)).toBe("/sign-in");
+    expect(resolveSessionRedirect("/sign-in", null)).toBeNull();
   });
 
   it("redirects authenticated users away from both auth entry routes", () => {
@@ -39,16 +45,30 @@ describe("resolveSessionRedirect", () => {
   it("allows authenticated users with route permission", () => {
     expect(resolveSessionRedirect("/agent/tasks", agentContext)).toBeNull();
   });
+
+  it("keeps a refreshed admin session on the admin dashboard", () => {
+    expect(resolveSessionRedirect("/dashboard/admin", adminContext)).toBeNull();
+  });
+
+  it("has no redirect cycle among root, login, sign-in, and admin dashboard", () => {
+    expect(resolveSessionRedirect("/", null)).toBe("/sign-in");
+    expect(resolveSessionRedirect("/sign-in", null)).toBeNull();
+    expect(resolveSessionRedirect("/login", null)).toBe("/sign-in");
+    expect(resolveSessionRedirect("/", adminContext)).toBeNull();
+    expect(resolveSessionRedirect("/login", adminContext)).toBe("/dashboard/admin");
+    expect(resolveSessionRedirect("/sign-in", adminContext)).toBe("/dashboard/admin");
+    expect(resolveSessionRedirect("/dashboard/admin", adminContext)).toBeNull();
+  });
 });
 
 describe("getAuthenticatedLandingRoute", () => {
   it.each([
-    [["super_admin"], "/dashboard/executive"],
+    [["super_admin"], "/dashboard/admin"],
     [["admin"], "/dashboard/admin"],
     [["partner"], "/dashboard/partner"],
-    [["supervisor"], "/dashboard/field"],
-    [["agent"], "/dashboard/field"],
-  ] as const)("maps supported roles %j to an existing dashboard", (roles, expected) => {
+    [["supervisor"], "/dashboard/supervisor"],
+    [["agent"], "/dashboard/personal"],
+  ] as const)("maps supported roles %j to the canonical dashboard", (roles, expected) => {
     expect(getAuthenticatedLandingRoute(roles)).toBe(expected);
   });
 

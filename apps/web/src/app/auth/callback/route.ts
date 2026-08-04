@@ -7,7 +7,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const nextPath = getSafeRedirectPath(request.nextUrl.searchParams.get("next"));
 
   if (code) {
-    const supabase = await createAuthServerClient();
+    const supabase = await createAuthServerClient({ cookieWriteMode: "required" });
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(new URL(nextPath, request.url));

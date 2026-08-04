@@ -1,14 +1,18 @@
 import { hasEveryPermission, type AuthContext, type RoleCode } from "@paysave/security";
-import { getRoutePolicy, isAuthenticationRoute } from "./route-authorization";
+import {
+  getRoutePolicy,
+  isAuthenticationRoute,
+  isLegacyAuthenticationRoute,
+} from "./route-authorization";
 
 const roleLandingRoutes: ReadonlyArray<{
   readonly roles: readonly RoleCode[];
   readonly route: string;
 }> = [
-  { roles: ["super_admin"], route: "/dashboard/executive" },
-  { roles: ["admin"], route: "/dashboard/admin" },
+  { roles: ["super_admin", "admin"], route: "/dashboard/admin" },
   { roles: ["partner"], route: "/dashboard/partner" },
-  { roles: ["supervisor", "agent"], route: "/dashboard/field" },
+  { roles: ["supervisor"], route: "/dashboard/supervisor" },
+  { roles: ["agent"], route: "/dashboard/personal" },
 ];
 
 /** Resolves the existing role dashboard without requiring permission grants. */
@@ -24,6 +28,10 @@ export function resolveSessionRedirect(
   pathname: string,
   context: AuthContext | null,
 ): string | null {
+  if (!context && isLegacyAuthenticationRoute(pathname)) {
+    return "/sign-in";
+  }
+
   if (context && isAuthenticationRoute(pathname)) {
     return getAuthenticatedLandingRoute(context.roles);
   }

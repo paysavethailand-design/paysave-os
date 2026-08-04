@@ -1,4 +1,7 @@
-import { getSafeRedirectPath, SignInForm } from "@/features/auth";
+import { redirect } from "next/navigation";
+import type { Route } from "next";
+import { getAuthenticatedLandingRoute, getSafeRedirectPath, SignInForm } from "@/features/auth";
+import { getAuthContext } from "@/features/auth/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@paysave/ui";
 
 interface SignInPageProps {
@@ -7,6 +10,11 @@ interface SignInPageProps {
 
 /** Renders the secure PAYSAVE OS sign-in screen. */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const context = await getAuthContext();
+  if (context) {
+    redirect(getAuthenticatedLandingRoute(context.roles) as Route);
+  }
+
   const parameters = await searchParams;
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">

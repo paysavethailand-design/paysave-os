@@ -2,7 +2,8 @@ import type { ReactElement, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthContext } from "@paysave/security";
 
-const { redirectMock, requireAuthMock } = vi.hoisted(() => ({
+const { getAuthContextMock, redirectMock, requireAuthMock } = vi.hoisted(() => ({
+  getAuthContextMock: vi.fn(),
   redirectMock: vi.fn((path: string): never => {
     throw new Error(`REDIRECT:${path}`);
   }),
@@ -14,6 +15,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/features/auth/server", () => ({
+  getAuthContext: getAuthContextMock,
   requireAuth: requireAuthMock,
 }));
 
@@ -44,6 +46,8 @@ function containsElementType(node: ReactNode, type: unknown): boolean {
 describe("authenticated redirect integration", () => {
   beforeEach(() => {
     redirectMock.mockClear();
+    getAuthContextMock.mockReset();
+    getAuthContextMock.mockResolvedValue(null);
     requireAuthMock.mockReset();
     requireAuthMock.mockResolvedValue(adminContext);
   });
@@ -53,9 +57,34 @@ describe("authenticated redirect integration", () => {
     expect(containsElementType(page, SignInForm)).toBe(true);
   });
 
-  it("redirects the legacy login route to the canonical sign-in route", () => {
-    expect(() => LoginPage()).toThrow("REDIRECT:/sign-in");
+  it("redirects an authenticated sign-in request to the admin dashboard", async () => {
+    getAuthContextMock.mockResolvedValue(adminContext);
+
+    await expect(SignInPage({ searchParams: Promise.resolve({}) })).rejects.toThrow(
+      "REDIRECT:/dashboard/admin",
+    );
+    expect(redirectMock).toHaveBeenCalledWith("/dashboard/admin");
+  });
+
+  it("redirects the unauthenticated legacy login route to canonical sign-in", async () => {
+    await expect(Promise.resolve().then(() => LoginPage())).rejects.toThrow("REDIRECT:/sign-in");
     expect(redirectMock).toHaveBeenCalledWith("/sign-in");
+  });
+
+  it("redirects an authenticated legacy login request to the admin dashboard", async () => {
+    getAuthContextMock.mockResolvedValue(adminContext);
+
+    await expect(Promise.resolve().then(() => LoginPage())).rejects.toThrow(
+      "REDIRECT:/dashboard/admin",
+    );
+    expect(redirectMock).toHaveBeenCalledWith("/dashboard/admin");
+  });
+
+  it("redirects an unauthenticated root request to canonical sign-in", async () => {
+    requireAuthMock.mockRejectedValue(new Error("REDIRECT:/sign-in"));
+
+    await expect(Promise.resolve().then(() => HomePage())).rejects.toThrow("REDIRECT:/sign-in");
+    expect(requireAuthMock).toHaveBeenCalledWith("/");
   });
 
   it("redirects an authenticated root request to the admin dashboard", async () => {

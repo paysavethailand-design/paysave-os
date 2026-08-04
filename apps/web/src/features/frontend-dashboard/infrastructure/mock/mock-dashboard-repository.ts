@@ -70,7 +70,10 @@ const k = (
     direction,
     helper,
   }));
-const models: Record<DashboardPersona, Omit<DashboardModel, "source" | "persona">> = {
+const models: Record<
+  Exclude<DashboardPersona, "supervisor" | "personal">,
+  Omit<DashboardModel, "source" | "persona">
+> = {
   executive: {
     eyebrow: "EXECUTIVE OVERVIEW",
     title: "ภาพรวมธุรกิจที่ตัดสินใจได้ใน 3 วินาที",
@@ -156,7 +159,8 @@ const models: Record<DashboardPersona, Omit<DashboardModel, "source" | "persona"
 /** Legacy in-memory mock adapter (kept for reference/tests). Production uses SupabaseDashboardRepository with live queries. */
 export class MockDashboardRepository implements DashboardRepository {
   async getDashboard(persona: DashboardPersona): Promise<DashboardModel> {
-    return { source: "mock", persona, ...structuredClone(models[persona]) };
+    const modelPersona = persona === "supervisor" || persona === "personal" ? "field" : persona;
+    return { source: "mock", persona, ...structuredClone(models[modelPersona]) };
   }
 }
 

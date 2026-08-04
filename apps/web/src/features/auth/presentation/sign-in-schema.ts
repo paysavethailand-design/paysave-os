@@ -7,7 +7,12 @@ export const signInSchema = z.object({
 
 /** Prevents open redirects by accepting only local absolute paths. */
 export function getSafeRedirectPath(candidate: string | null | undefined): string {
-  if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
+  if (
+    !candidate ||
+    !candidate.startsWith("/") ||
+    candidate.startsWith("//") ||
+    candidate.includes("\\")
+  ) {
     return "/";
   }
 

@@ -1,4 +1,11 @@
-export const dashboardPersonas = ["executive", "partner", "admin", "field"] as const;
+export const dashboardPersonas = [
+  "executive",
+  "partner",
+  "admin",
+  "field",
+  "supervisor",
+  "personal",
+] as const;
 export type DashboardPersona = (typeof dashboardPersonas)[number];
 export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
 export interface DashboardKpi {
@@ -50,6 +57,8 @@ export const DASHBOARD_PERSONA_ROLES: Record<DashboardPersona, readonly RoleCode
   admin: ["admin", "super_admin"],
   partner: ["partner"],
   field: ["supervisor", "agent"],
+  supervisor: ["supervisor"],
+  personal: ["agent"],
 } as const;
 
 export function canAccessDashboard(persona: DashboardPersona, roles: readonly RoleCode[]): boolean {

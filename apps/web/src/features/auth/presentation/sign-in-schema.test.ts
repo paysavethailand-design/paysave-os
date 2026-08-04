@@ -18,5 +18,6 @@ describe("getSafeRedirectPath", () => {
     expect(getSafeRedirectPath("/agent/tasks")).toBe("/agent/tasks");
     expect(getSafeRedirectPath("https://attacker.example")).toBe("/");
     expect(getSafeRedirectPath("//attacker.example")).toBe("/");
+    expect(getSafeRedirectPath("/\\attacker.example")).toBe("/");
   });
 });

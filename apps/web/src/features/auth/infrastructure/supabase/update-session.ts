@@ -1,7 +1,10 @@
 import { parsePaysaveClaims, type AuthContext } from "@paysave/security";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { canAccessDesignPreview } from "../../application/route-authorization";
+import {
+  canAccessDesignPreview,
+  isAuthenticationRoute,
+} from "../../application/route-authorization";
 import { resolveSessionRedirect } from "../../application/session-navigation";
 import { getPublicEnvironment, getServerEnvironment } from "@/shared/config";
 
@@ -14,7 +17,7 @@ function createRedirectResponse(
   const url = request.nextUrl.clone();
   url.pathname = destination;
   url.search = "";
-  if (destination === "/sign-in") {
+  if (destination === "/sign-in" && !isAuthenticationRoute(request.nextUrl.pathname)) {
     url.searchParams.set("next", request.nextUrl.pathname);
   }
 
@@ -47,12 +50,22 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     },
   });
 
+  const correlationId = globalThis.crypto.randomUUID();
   const { data, error } = await supabase.auth.getClaims();
   let context: AuthContext | null = null;
-  if (!error && data?.claims) {
+  if (error) {
+    console.error("AUTH_CLAIMS_VERIFICATION_FAILED", {
+      category: "claims_verification_error",
+      correlationId,
+    });
+  } else if (data?.claims) {
     try {
       context = parsePaysaveClaims(data.claims);
     } catch {
+      console.error("AUTH_CONTEXT_PARSE_FAILED", {
+        category: "claims_parse_error",
+        correlationId,
+      });
       context = null;
     }
   }

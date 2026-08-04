@@ -5,7 +5,8 @@ export interface RoutePolicy {
   readonly permissions: readonly PermissionCode[];
 }
 
-const authenticationRoutePrefixes = ["/login", "/sign-in"] as const;
+const legacyAuthenticationRoutePrefixes = ["/login"] as const;
+const authenticationRoutePrefixes = [...legacyAuthenticationRoutePrefixes, "/sign-in"] as const;
 const publicRoutePrefixes = [
   ...authenticationRoutePrefixes,
   "/auth/callback",
@@ -39,6 +40,13 @@ export function isPublicRoute(pathname: string): boolean {
 /** Returns whether the route is an authentication entry screen. */
 export function isAuthenticationRoute(pathname: string): boolean {
   return authenticationRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+/** Returns whether a route is a legacy authentication alias. */
+export function isLegacyAuthenticationRoute(pathname: string): boolean {
+  return legacyAuthenticationRoutePrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
