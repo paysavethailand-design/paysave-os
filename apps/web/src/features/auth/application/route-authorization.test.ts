@@ -4,6 +4,7 @@ import { canAccessDesignPreview, getRoutePolicy, isPublicRoute } from "./route-a
 describe("route authorization", () => {
   it("allows authentication callbacks and operational probes without a session", () => {
     expect(isPublicRoute("/auth/callback")).toBe(true);
+    expect(isPublicRoute("/login")).toBe(true);
     expect(isPublicRoute("/sign-in")).toBe(true);
     expect(isPublicRoute("/healthz")).toBe(true);
     expect(isPublicRoute("/readyz")).toBe(true);

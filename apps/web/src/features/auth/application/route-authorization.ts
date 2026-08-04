@@ -5,8 +5,9 @@ export interface RoutePolicy {
   readonly permissions: readonly PermissionCode[];
 }
 
+const authenticationRoutePrefixes = ["/login", "/sign-in"] as const;
 const publicRoutePrefixes = [
-  "/sign-in",
+  ...authenticationRoutePrefixes,
   "/auth/callback",
   "/healthz",
   "/readyz",
@@ -31,6 +32,13 @@ export function canAccessDesignPreview(pathname: string, enabled: boolean): bool
 /** Returns whether a route is accessible without an authenticated session. */
 export function isPublicRoute(pathname: string): boolean {
   return publicRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+/** Returns whether the route is an authentication entry screen. */
+export function isAuthenticationRoute(pathname: string): boolean {
+  return authenticationRoutePrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
