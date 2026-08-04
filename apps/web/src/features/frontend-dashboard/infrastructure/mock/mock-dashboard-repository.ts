@@ -163,11 +163,3 @@ export class MockDashboardRepository implements DashboardRepository {
     return { source: "mock", persona, ...structuredClone(models[modelPersona]) };
   }
 }
-
-import { SupabaseDashboardRepository } from "../supabase/supabase-dashboard-repository";
-const isMockMode =
-  typeof process !== "undefined" &&
-  (process.env.NODE_ENV === "development" || process.env.USE_MOCK === "true");
-export const dashboardRepository = isMockMode
-  ? new MockDashboardRepository()
-  : new SupabaseDashboardRepository();

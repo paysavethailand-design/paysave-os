@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parsePaysaveClaims, type RoleCode } from "@paysave/security";
 import { DASHBOARD_PERSONA_ROLES } from "../../domain/dashboard";
-import { createClient as createAuthBrowserClient } from "@/shared/supabase/browser-client";
 import type { DashboardRepository } from "../../application/ports/dashboard-repository";
 import type {
   ActivityRow,
@@ -41,17 +40,10 @@ type RecentCaseRow = {
  * Falls back gracefully for empty datasets.
  */
 export class SupabaseDashboardRepository implements DashboardRepository {
-  private client: SupabaseClient | null = null;
-
-  private async getClient(): Promise<SupabaseClient> {
-    if (!this.client) {
-      this.client = createAuthBrowserClient();
-    }
-    return this.client;
-  }
+  public constructor(private readonly client: SupabaseClient) {}
 
   async getDashboard(persona: DashboardPersona): Promise<DashboardModel> {
-    const client = await this.getClient();
+    const client = this.client;
 
     // Defense-in-depth role check (primary is route guard + RLS)
     const { data: claimsData, error: claimsError } = await client.auth.getClaims();
@@ -90,33 +82,40 @@ export class SupabaseDashboardRepository implements DashboardRepository {
     let recentActivity: ActivityRow[] = [];
 
     try {
-      // Recovery cases
-      const { count: casesCount } = await client
-        .schema("recovery")
-        .from("cases")
-        .select("*", { count: "exact", head: true })
-        .is("deleted_at", null);
+      const [casesResult, openResult, recentResult, assetsResult] = await Promise.all([
+        client
+          .schema("recovery")
+          .from("cases")
+          .select("*", { count: "exact", head: true })
+          .is("deleted_at", null)
+          .abortSignal(AbortSignal.timeout(5000)),
+        client
+          .schema("recovery")
+          .from("cases")
+          .select("*", { count: "exact", head: true })
+          .is("deleted_at", null)
+          .not("closed_at", "is", null)
+          .abortSignal(AbortSignal.timeout(5000)),
+        client
+          .schema("recovery")
+          .from("cases")
+          .select("id, partner_id, status_id, opened_at, updated_at, business_object_id")
+          .is("deleted_at", null)
+          .order("updated_at", { ascending: false })
+          .limit(4)
+          .abortSignal(AbortSignal.timeout(5000)),
+        client
+          .schema("asset")
+          .from("assets")
+          .select("*", { count: "exact", head: true })
+          .abortSignal(AbortSignal.timeout(5000)),
+      ]);
 
-      totalCases = casesCount ?? 0;
+      totalCases = casesResult.count ?? 0;
+      openCases = openResult.count ?? Math.max(0, Math.floor(totalCases * 0.4));
+      totalAssets = assetsResult.count ?? 0;
 
-      const { count: openCount } = await client
-        .schema("recovery")
-        .from("cases")
-        .select("*", { count: "exact", head: true })
-        .is("deleted_at", null)
-        .not("closed_at", "is", null); // adjust if status based
-
-      openCases = openCount ?? Math.max(0, Math.floor(totalCases * 0.4));
-
-      // Recent activity from cases
-      const { data: recentCases } = await client
-        .schema("recovery")
-        .from("cases")
-        .select("id, partner_id, status_id, opened_at, updated_at, business_object_id")
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false })
-        .limit(4);
-
+      const recentCases = recentResult.data;
       if (recentCases && recentCases.length > 0) {
         recentActivity = (recentCases as RecentCaseRow[]).map((c, idx: number) => ({
           id: String(c.id ?? `RC-${idx}`),
@@ -131,21 +130,10 @@ export class SupabaseDashboardRepository implements DashboardRepository {
             : `${idx + 5} นาที`,
         }));
       }
-    } catch (e) {
-      // graceful fallback if tables not populated or RLS
-      console.warn("[SupabaseDashboard] Recovery query limited:", e);
-    }
-
-    try {
-      // Assets
-      const { count: assetsCount } = await client
-        .schema("asset")
-        .from("assets")
-        .select("*", { count: "exact", head: true });
-
-      totalAssets = assetsCount ?? 0;
-    } catch (e) {
-      console.warn("[SupabaseDashboard] Asset query limited:", e);
+    } catch {
+      console.warn("DASHBOARD_DATA_LOAD_LIMITED", {
+        category: "query_failed_or_timed_out",
+      });
     }
 
     // Compute persona-aware model from live counts

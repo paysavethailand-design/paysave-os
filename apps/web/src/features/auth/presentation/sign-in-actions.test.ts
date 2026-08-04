@@ -134,4 +134,22 @@ describe("signInAction", () => {
     expect(signOutMock).toHaveBeenCalledOnce();
     expect(redirectMock).toHaveBeenCalledWith("/sign-in");
   });
+
+  it("does not report logout success when Supabase fails to clear the session", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    signOutMock.mockResolvedValue({ error: new Error("sensitive sign-out failure") });
+
+    await expect(signOutAction()).rejects.toThrow("AUTH_SIGN_OUT_FAILED");
+
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      "AUTH_SIGN_OUT_FAILED",
+      expect.objectContaining({
+        category: "session_clear_failed",
+        correlationId: expect.any(String),
+      }),
+    );
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("sensitive sign-out failure");
+    consoleError.mockRestore();
+  });
 });

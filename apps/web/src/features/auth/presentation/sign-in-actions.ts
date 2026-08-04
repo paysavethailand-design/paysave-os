@@ -65,7 +65,19 @@ export async function signInAction(
 
 /** Revokes the Supabase session and returns the user to sign in. */
 export async function signOutAction(): Promise<void> {
-  const supabase = await createClient({ cookieWriteMode: "required" });
-  await supabase.auth.signOut();
+  const correlationId = globalThis.crypto.randomUUID();
+
+  try {
+    const supabase = await createClient({ cookieWriteMode: "required" });
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch {
+    console.error("AUTH_SIGN_OUT_FAILED", {
+      category: "session_clear_failed",
+      correlationId,
+    });
+    throw new Error("AUTH_SIGN_OUT_FAILED");
+  }
+
   redirect("/sign-in");
 }

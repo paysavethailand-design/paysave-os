@@ -1,21 +1,18 @@
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import { requireAuth } from "@/features/auth/server";
+import { createAuthServerClient, requireAuth } from "@/features/auth/server";
 import {
-  dashboardPersonas,
   FrontendDashboardPage,
-  isDashboardPersona,
   canAccessDashboard,
+  isDashboardPersona,
 } from "@/features/frontend-dashboard";
 
 interface PageProps {
   readonly params: Promise<{ persona: string }>;
 }
 
-export function generateStaticParams() {
-  return dashboardPersonas.map((persona) => ({ persona }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPersonaPage({ params }: PageProps) {
   const { persona } = await params;
@@ -27,5 +24,6 @@ export default async function DashboardPersonaPage({ params }: PageProps) {
     redirect("/unauthorized" as Route);
   }
 
-  return <FrontendDashboardPage persona={persona} />;
+  const client = await createAuthServerClient();
+  return <FrontendDashboardPage client={client} persona={persona} />;
 }

@@ -39,6 +39,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { cn } from "@paysave/ui";
+import { signOutAction } from "@/features/auth/actions";
 const navigation = [
   { href: "/dashboard/executive", label: "Executive", icon: BarChart3 },
   { href: "/dashboard/partner", label: "Partner", icon: Building2 },
@@ -122,6 +123,19 @@ function SidebarContent() {
     </div>
   );
 }
+
+/** Submits the real Supabase sign-out action so cookies are cleared before returning to sign-in. */
+export function DashboardSignOutForm() {
+  return (
+    <form action={signOutAction} className="w-full">
+      <button className="flex w-full items-center gap-2 text-danger" type="submit">
+        <LogOut className="size-4" />
+        ออกจากระบบ
+      </button>
+    </form>
+  );
+}
+
 export function DashboardShell({ children }: { readonly children: ReactNode }) {
   const { resolvedTheme, setTheme } = useTheme();
   return (
@@ -223,10 +237,7 @@ export function DashboardShell({ children }: { readonly children: ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link className="text-danger" href={"/login" as Route}>
-                      <LogOut className="size-4" />
-                      ออกจาก Demo
-                    </Link>
+                    <DashboardSignOutForm />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
