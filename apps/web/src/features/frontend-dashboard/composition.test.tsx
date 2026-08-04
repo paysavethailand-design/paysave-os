@@ -49,9 +49,14 @@ describe("FrontendDashboardPage", () => {
     const authenticatedClient = {} as SupabaseClient;
     getDashboard.mockResolvedValue(model);
 
-    await FrontendDashboardPage({ client: authenticatedClient, persona: "admin" });
+    const rendered = await FrontendDashboardPage({
+      canViewInventory: true,
+      client: authenticatedClient,
+      persona: "admin",
+    });
 
     expect(constructorSpy).toHaveBeenCalledWith(authenticatedClient);
     expect(getDashboard).toHaveBeenCalledWith("admin");
+    expect(rendered.props.canViewInventory).toBe(true);
   });
 });

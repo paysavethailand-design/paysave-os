@@ -31,7 +31,7 @@ const adminContext = {
   userId: "pilot",
   activePartnerId: "RC_STAGING",
   roles: ["admin"],
-  permissions: [],
+  permissions: ["assets.read"],
   tenantScope: "active",
   sessionVersion: 1,
 } as const;
@@ -54,7 +54,7 @@ describe("DashboardPersonaPage", () => {
 
     const rendered = (await DashboardPersonaPage({
       params: Promise.resolve({ persona: "admin" }),
-    })) as ReactElement<{ client: object; persona: string }>;
+    })) as ReactElement<{ canViewInventory: boolean; client: object; persona: string }>;
 
     expect(requireAuth).toHaveBeenCalledWith("/dashboard/admin");
     expect(canAccessDashboard).toHaveBeenCalledWith("admin", ["admin"]);
@@ -62,6 +62,7 @@ describe("DashboardPersonaPage", () => {
     expect(createAuthServerClient).toHaveBeenCalledWith();
     expect(rendered.type).toBe(frontendDashboardPage);
     expect(rendered.props).toEqual({
+      canViewInventory: true,
       client: authenticatedClient,
       persona: "admin",
     });

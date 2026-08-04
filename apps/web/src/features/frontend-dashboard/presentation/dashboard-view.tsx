@@ -22,9 +22,15 @@ import { ActivityTable } from "./activity-table";
 import { LazyDashboardCharts } from "./lazy-dashboard-charts";
 import { DashboardShell } from "./dashboard-shell";
 const icons = [CircleDollarSign, Gauge, Activity, ShieldCheck] as const;
-export function DashboardView({ model }: { readonly model: DashboardModel }) {
+export function DashboardView({
+  canViewInventory,
+  model,
+}: {
+  readonly canViewInventory: boolean;
+  readonly model: DashboardModel;
+}) {
   return (
-    <DashboardShell>
+    <DashboardShell canViewInventory={canViewInventory}>
       <div className="space-y-6">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>

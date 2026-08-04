@@ -20,7 +20,9 @@ describe("Supabase client module boundaries", () => {
     expect(composition).not.toContain("@/features/auth/server");
     expect(composition).toContain("new SupabaseDashboardRepository(client)");
     expect(page).toContain("createAuthServerClient");
-    expect(page).toContain("<FrontendDashboardPage client={client} persona={persona} />");
+    expect(page).toContain("<FrontendDashboardPage");
+    expect(page).toContain("client={client}");
+    expect(page).toContain("persona={persona}");
   });
 
   it("keeps browser-client free from Server Component APIs", () => {

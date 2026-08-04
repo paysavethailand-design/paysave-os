@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
+import { hasPermission } from "@paysave/security";
 import { createAuthServerClient, requireAuth } from "@/features/auth/server";
+import { ASSETS_PERMISSIONS } from "@/features/assets/server";
 import {
   FrontendDashboardPage,
   canAccessDashboard,
@@ -25,5 +27,11 @@ export default async function DashboardPersonaPage({ params }: PageProps) {
   }
 
   const client = await createAuthServerClient();
-  return <FrontendDashboardPage client={client} persona={persona} />;
+  return (
+    <FrontendDashboardPage
+      canViewInventory={hasPermission(context, ASSETS_PERMISSIONS.READ)}
+      client={client}
+      persona={persona}
+    />
+  );
 }

@@ -51,7 +51,19 @@ const recoveryNavigation = [
   { href: "/recovery/cases", label: "Recovery Cases", icon: HeartHandshake },
   { href: "/recovery/assignments", label: "Assignments", icon: ClipboardList },
 ] as const;
-function Navigation({ mobile = false }: { readonly mobile?: boolean }) {
+
+/** Keeps Inventory discoverability aligned with the verified `assets.read` claim. */
+export function getDashboardNavigation(canViewInventory: boolean) {
+  return navigation.filter((item) => item.href !== "/inventory" || canViewInventory);
+}
+
+function Navigation({
+  canViewInventory,
+  mobile = false,
+}: {
+  readonly canViewInventory: boolean;
+  readonly mobile?: boolean;
+}) {
   const pathname = usePathname();
   const renderLink = (item: (typeof navigation)[number] | (typeof recoveryNavigation)[number]) => {
     const active =
@@ -81,7 +93,7 @@ function Navigation({ mobile = false }: { readonly mobile?: boolean }) {
         <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.16em] text-slate-400">
           DASHBOARDS
         </p>
-        {navigation.map(renderLink)}
+        {getDashboardNavigation(canViewInventory).map(renderLink)}
       </div>
       <div className="space-y-1">
         <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.16em] text-slate-400">
@@ -92,7 +104,7 @@ function Navigation({ mobile = false }: { readonly mobile?: boolean }) {
     </nav>
   );
 }
-function SidebarContent() {
+function SidebarContent({ canViewInventory }: { readonly canViewInventory: boolean }) {
   return (
     <div className="flex h-full flex-col bg-slate-950 text-white">
       <div className="flex h-20 items-center gap-3 px-6">
@@ -105,7 +117,7 @@ function SidebarContent() {
         </div>
       </div>
       <Separator className="bg-white/10" />
-      <Navigation />
+      <Navigation canViewInventory={canViewInventory} />
       <div className="mt-auto p-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between">
@@ -136,12 +148,18 @@ export function DashboardSignOutForm() {
   );
 }
 
-export function DashboardShell({ children }: { readonly children: ReactNode }) {
+export function DashboardShell({
+  canViewInventory = false,
+  children,
+}: {
+  readonly canViewInventory?: boolean;
+  readonly children: ReactNode;
+}) {
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 lg:block">
-        <SidebarContent />
+        <SidebarContent canViewInventory={canViewInventory} />
       </aside>
       <div className="min-h-screen lg:pl-72">
         <header className="sticky top-0 z-30 border-b border-border/80 bg-surface/88 backdrop-blur-xl">
@@ -155,7 +173,7 @@ export function DashboardShell({ children }: { readonly children: ReactNode }) {
               <SheetContent className="p-0" side="left">
                 <SheetTitle className="sr-only">เมนูหลัก</SheetTitle>
                 <SheetDescription className="sr-only">เลือก Dashboard</SheetDescription>
-                <SidebarContent />
+                <SidebarContent canViewInventory={canViewInventory} />
               </SheetContent>
             </Sheet>
             <div>
