@@ -28,13 +28,20 @@ interface SafeDatabaseError {
   readonly code?: string;
 }
 
-function safeRowsAffected(count: number | null): number {
-  return Number.isInteger(count) && count !== null && count >= 0 ? count : 0;
-}
-
 function classifyDatabaseError(error: SafeDatabaseError): AssetUpdateFailureCategory {
-  if (error.code === "42501" || error.code === "PGRST301" || error.code === "PGRST302") {
+  if (
+    error.code === "42501" ||
+    error.code === "PGRST301" ||
+    error.code === "PGRST302" ||
+    error.code === "PT403"
+  ) {
     return "RLS_OR_PRIVILEGE";
+  }
+  if (error.code === "PT404") {
+    return "NOT_FOUND_OR_WRONG_TENANT";
+  }
+  if (error.code === "PT409") {
+    return "VERSION_CONFLICT";
   }
   if (error.code?.startsWith("23")) {
     return "CONSTRAINT_VIOLATION";
@@ -114,67 +121,29 @@ export class SupabaseAssetRepository implements AssetRepository {
     partnerId: string,
     input: UpdateAssetInput,
   ): Promise<AssetUpdateResult> {
-    const payload: Record<string, string | number | null> = {
-      version_no: input.expectedVersionNo + 1,
-    };
-    if (input.displayRef !== undefined) payload.display_ref = input.displayRef;
-    if (input.currentOwnerCustomerId !== undefined) {
-      payload.current_owner_customer_id = input.currentOwnerCustomerId;
-    }
+    const { data, error } = await this.client.schema(SCHEMA).rpc("update_asset_inventory_fields", {
+      p_asset_id: assetId,
+      p_partner_id: partnerId,
+      p_expected_version_no: input.expectedVersionNo,
+      p_display_ref: input.displayRef ?? null,
+      p_set_current_owner: input.currentOwnerCustomerId !== undefined,
+      p_current_owner_customer_id: input.currentOwnerCustomerId ?? null,
+    });
 
-    const { data, error, count } = await this.client
-      .schema(SCHEMA)
-      .from(ASSETS_TABLE)
-      .update(payload, { count: "exact" })
-      .eq("id", assetId)
-      .eq("partner_id", partnerId)
-      .eq("version_no", input.expectedVersionNo)
-      .select(COLUMNS);
-
-    const rowsAffected = safeRowsAffected(count);
     if (error) {
-      return { ok: false, category: classifyDatabaseError(error), rowsAffected };
+      return { ok: false, category: classifyDatabaseError(error), rowsAffected: 0 };
     }
 
     const rows = Array.isArray(data) ? data : [];
-    if (rowsAffected === 1 && rows.length === 1) {
-      return {
-        ok: true,
-        asset: toAsset(assetRowSchema.parse(rows[0])),
-        rowsAffected: 1,
-      };
-    }
-
-    if (rowsAffected !== 0 || rows.length !== 0) {
-      return { ok: false, category: "DATABASE_ERROR", rowsAffected };
-    }
-
-    const diagnostic = await this.client
-      .schema(SCHEMA)
-      .from(ASSETS_TABLE)
-      .select("version_no")
-      .eq("id", assetId)
-      .eq("partner_id", partnerId)
-      .maybeSingle();
-
-    if (diagnostic.error) {
-      return {
-        ok: false,
-        category: classifyDatabaseError(diagnostic.error),
-        rowsAffected: 0,
-      };
-    }
-    if (!diagnostic.data) {
-      return { ok: false, category: "NOT_FOUND_OR_WRONG_TENANT", rowsAffected: 0 };
-    }
-
-    const currentVersion = (diagnostic.data as { readonly version_no?: unknown }).version_no;
-    if (typeof currentVersion !== "number" || !Number.isInteger(currentVersion)) {
+    if (rows.length !== 1) {
       return { ok: false, category: "DATABASE_ERROR", rowsAffected: 0 };
     }
-    return currentVersion !== input.expectedVersionNo
-      ? { ok: false, category: "VERSION_CONFLICT", rowsAffected: 0 }
-      : { ok: false, category: "RLS_OR_PRIVILEGE", rowsAffected: 0 };
+
+    return {
+      ok: true,
+      asset: toAsset(assetRowSchema.parse(rows[0])),
+      rowsAffected: 1,
+    };
   }
 
   async changeStatus(assetId: string, transition: AssetStatusTransition): Promise<Asset | null> {

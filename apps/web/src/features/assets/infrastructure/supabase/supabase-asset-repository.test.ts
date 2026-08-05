@@ -46,9 +46,11 @@ describe("SupabaseAssetRepository", () => {
     );
   });
 
-  it("updates display_ref and returns the database-confirmed row", async () => {
+  it("updates through the tenant-authorized RPC and returns its database-confirmed row", async () => {
     const updatedRow = { ...row, display_ref: "Toyota Camry - ABC-1234-TEST", version_no: 2 };
-    const { repository, client } = repositoryWith([{ data: [updatedRow], error: null, count: 1 }]);
+    const rpc = vi.fn().mockResolvedValue({ data: [updatedRow], error: null });
+    const client = { schema: vi.fn(() => ({ rpc })) };
+    const repository = new SupabaseAssetRepository(client as unknown as SupabaseClient);
 
     await expect(
       repository.update(row.id, row.partner_id, {
@@ -65,101 +67,52 @@ describe("SupabaseAssetRepository", () => {
       },
     });
 
-    expect(client.recordedBuilders()[0]?.recordedCalls()).toEqual([
-      {
-        method: "update",
-        args: [{ display_ref: "Toyota Camry - ABC-1234-TEST", version_no: 2 }, { count: "exact" }],
-      },
-      { method: "eq", args: ["id", row.id] },
-      { method: "eq", args: ["partner_id", row.partner_id] },
-      { method: "eq", args: ["version_no", 1] },
-      {
-        method: "select",
-        args: [
-          "id, partner_id, asset_type_id, business_object_id, display_ref, current_status_code, current_owner_customer_id, version_no, created_at, updated_at",
-        ],
-      },
-    ]);
-  });
-
-  it("classifies an explicit database privilege denial without exposing its raw message", async () => {
-    const { repository } = repositoryWith([
-      {
-        data: null,
-        error: { code: "42501", message: `permission denied for ${row.id}` },
-        count: 0,
-      },
-    ]);
-
-    await expect(
-      repository.update(row.id, row.partner_id, {
-        displayRef: "INV-TEST",
-        expectedVersionNo: 1,
-      }),
-    ).resolves.toEqual({ ok: false, category: "RLS_OR_PRIVILEGE", rowsAffected: 0 });
-  });
-
-  it("classifies an integrity constraint without exposing its raw message", async () => {
-    const { repository } = repositoryWith([
-      {
-        data: null,
-        error: { code: "23514", message: `constraint rejected ${row.partner_id}` },
-        count: 0,
-      },
-    ]);
-
-    await expect(
-      repository.update(row.id, row.partner_id, {
-        displayRef: "INV-TEST",
-        expectedVersionNo: 1,
-      }),
-    ).resolves.toEqual({ ok: false, category: "CONSTRAINT_VIOLATION", rowsAffected: 0 });
-  });
-
-  it("classifies a zero-row update as a version conflict when the scoped row advanced", async () => {
-    const { repository } = repositoryWith([
-      { data: [], error: null, count: 0 },
-      { data: { version_no: 2 }, error: null },
-    ]);
-
-    await expect(
-      repository.update(row.id, row.partner_id, {
-        displayRef: "INV-TEST",
-        expectedVersionNo: 1,
-      }),
-    ).resolves.toEqual({ ok: false, category: "VERSION_CONFLICT", rowsAffected: 0 });
-  });
-
-  it("classifies a hidden zero-row update without leaking whether another tenant owns it", async () => {
-    const { repository } = repositoryWith([
-      { data: [], error: null, count: 0 },
-      { data: null, error: null },
-    ]);
-
-    await expect(
-      repository.update(row.id, row.partner_id, {
-        displayRef: "INV-TEST",
-        expectedVersionNo: 1,
-      }),
-    ).resolves.toEqual({
-      ok: false,
-      category: "NOT_FOUND_OR_WRONG_TENANT",
-      rowsAffected: 0,
+    expect(client.schema).toHaveBeenCalledWith("asset");
+    expect(rpc).toHaveBeenCalledWith("update_asset_inventory_fields", {
+      p_asset_id: row.id,
+      p_partner_id: row.partner_id,
+      p_expected_version_no: 1,
+      p_display_ref: "Toyota Camry - ABC-1234-TEST",
+      p_set_current_owner: false,
+      p_current_owner_customer_id: null,
     });
   });
 
-  it("classifies a visible same-version zero-row update as RLS or privilege denial", async () => {
-    const { repository } = repositoryWith([
-      { data: [], error: null, count: 0 },
-      { data: { version_no: 1 }, error: null },
-    ]);
+  it.each([
+    ["PT403", "RLS_OR_PRIVILEGE"],
+    ["42501", "RLS_OR_PRIVILEGE"],
+    ["PT404", "NOT_FOUND_OR_WRONG_TENANT"],
+    ["PT409", "VERSION_CONFLICT"],
+    ["23514", "CONSTRAINT_VIOLATION"],
+  ] as const)("maps RPC SQLSTATE %s to safe category %s", async (code, category) => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code, message: `sensitive database detail ${row.id} ${row.partner_id}` },
+    });
+    const repository = new SupabaseAssetRepository({
+      schema: vi.fn(() => ({ rpc })),
+    } as unknown as SupabaseClient);
 
     await expect(
       repository.update(row.id, row.partner_id, {
         displayRef: "INV-TEST",
         expectedVersionNo: 1,
       }),
-    ).resolves.toEqual({ ok: false, category: "RLS_OR_PRIVILEGE", rowsAffected: 0 });
+    ).resolves.toEqual({ ok: false, category, rowsAffected: 0 });
+  });
+
+  it("fails closed when the RPC does not return exactly one confirmed row", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const repository = new SupabaseAssetRepository({
+      schema: vi.fn(() => ({ rpc })),
+    } as unknown as SupabaseClient);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({ ok: false, category: "DATABASE_ERROR", rowsAffected: 0 });
   });
 
   it("changeStatus executes one atomic RPC carrying the expected version and audit correlation", async () => {

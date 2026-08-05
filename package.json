@@ -36,7 +36,8 @@
     "validate:runtime-container": "node scripts/ci/check-runtime-container.mjs",
     "validate:openapi": "redocly lint docs/api/openapi.yaml docs/api/openapi-recovery-core.yaml --config redocly.yaml",
     "validate:production-runtime": "node scripts/ci/validate-production-runtime.mjs",
-    "verify:database": "bash scripts/ci/verify-database.sh"
+    "verify:database": "bash scripts/ci/verify-database.sh",
+    "verify:managed-staging-inventory-rls": "bash database/tests/managed_staging_inventory_rls_verify.sh"
   },
   "engines": {
     "node": ">=22.0.0"
