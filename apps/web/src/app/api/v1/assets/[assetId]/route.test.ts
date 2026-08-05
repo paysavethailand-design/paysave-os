@@ -1,6 +1,7 @@
 import type { AuthContext } from "@paysave/security";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/shared/lib/api-error";
 
 const actor: AuthContext = {
   userId: "0f4e2e3c-6cc3-4ca8-9b98-5edbca4ca111",
@@ -55,15 +56,28 @@ describe("GET /api/v1/assets/[assetId]", () => {
 
 describe("PATCH /api/v1/assets/[assetId]", () => {
   it("requires assets.manage", async () => {
-    updateAssetUseCase.mockResolvedValue({ id: "1" });
+    updateAssetUseCase.mockResolvedValue({ asset: { id: "1" }, rowsAffected: 1 });
     await PATCH(
       new NextRequest("https://api.paysave.internal/api/v1/assets/1", {
         method: "PATCH",
-        body: JSON.stringify({ displayRef: "New" }),
+        body: JSON.stringify({ displayRef: "New", expectedVersionNo: 1 }),
       }),
       paramsFor("1"),
     );
     expect(requireApiPermission).toHaveBeenCalledWith("assets.manage");
+  });
+
+  it("returns 409 for an optimistic version conflict instead of collapsing it to 500", async () => {
+    updateAssetUseCase.mockRejectedValue(new ApiError("conflict", "Asset update failed"));
+    const response = await PATCH(
+      new NextRequest("https://api.paysave.internal/api/v1/assets/1", {
+        method: "PATCH",
+        body: JSON.stringify({ displayRef: "Updated", expectedVersionNo: 1 }),
+      }),
+      paramsFor("1"),
+    );
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ error: { code: "conflict" } });
   });
 });
 

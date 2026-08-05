@@ -11,6 +11,21 @@ export interface NewAssetRecord extends CreateAssetInput {
   readonly partnerId: string;
 }
 
+export type AssetUpdateFailureCategory =
+  | "RLS_OR_PRIVILEGE"
+  | "VERSION_CONFLICT"
+  | "CONSTRAINT_VIOLATION"
+  | "NOT_FOUND_OR_WRONG_TENANT"
+  | "DATABASE_ERROR";
+
+export type AssetUpdateResult =
+  | { readonly ok: true; readonly asset: Asset; readonly rowsAffected: 1 }
+  | {
+      readonly ok: false;
+      readonly category: AssetUpdateFailureCategory;
+      readonly rowsAffected: number;
+    };
+
 export interface AssetStatusTransition {
   readonly partnerId: string;
   readonly fromStatusCode: string;
@@ -36,7 +51,7 @@ export interface AssetRepository {
   /** Validates the FK target before insert so a bad `assetTypeId` surfaces as 422, not a raw DB error. */
   assetTypeExists(partnerId: string, assetTypeId: string): Promise<boolean>;
   create(input: NewAssetRecord): Promise<Asset>;
-  update(assetId: string, input: UpdateAssetInput): Promise<Asset | null>;
+  update(assetId: string, partnerId: string, input: UpdateAssetInput): Promise<AssetUpdateResult>;
   /**
    * Appends an `asset_status_history` row and updates `assets.current_status_code`/`version_no`.
    * These are two sequential statements (PostgREST has no client-side multi-statement transaction),

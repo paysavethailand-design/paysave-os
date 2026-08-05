@@ -43,7 +43,7 @@ class LifecycleRepository implements AssetRepository {
     return this.asset;
   }
   async update() {
-    return this.asset;
+    return { ok: true as const, asset: this.asset, rowsAffected: 1 as const };
   }
   async changeStatus(_assetId: string, transition: AssetStatusTransition) {
     this.history.push(transition);

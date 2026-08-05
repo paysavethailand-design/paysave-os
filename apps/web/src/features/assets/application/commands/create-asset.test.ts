@@ -41,7 +41,7 @@ function fakeRepository(overrides: Partial<AssetRepository> = {}): AssetReposito
       createdAt: "2026-07-22T00:00:00.000Z",
       updatedAt: "2026-07-22T00:00:00.000Z",
     }),
-    update: async () => null,
+    update: async () => ({ ok: false, category: "DATABASE_ERROR", rowsAffected: 0 }),
     changeStatus: async () => null,
     ...overrides,
   };

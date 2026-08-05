@@ -3,48 +3,79 @@ import { resolveWritePartnerId } from "@paysave/security";
 import { ApiError } from "@/shared/lib/api-error";
 import type { Asset } from "../../domain/entities/asset";
 import { updateAssetSchema } from "../dto/asset-schemas";
-import type { AssetRepository } from "../ports/asset-repository";
+import type { AssetRepository, AssetUpdateFailureCategory } from "../ports/asset-repository";
 import type { RequestContext } from "../ports/request-context";
 
-export interface UpdateAssetDeps {
+export interface AssetUpdateSuccess {
+  readonly asset: Asset;
+  readonly rowsAffected: 1;
+}
+
+function apiCodeForFailure(category: AssetUpdateFailureCategory) {
+  switch (category) {
+    case "RLS_OR_PRIVILEGE":
+      return "forbidden" as const;
+    case "VERSION_CONFLICT":
+      return "conflict" as const;
+    case "CONSTRAINT_VIOLATION":
+      return "validation_failed" as const;
+    case "NOT_FOUND_OR_WRONG_TENANT":
+      return "not_found" as const;
+    case "DATABASE_ERROR":
+      return "internal_error" as const;
+  }
+}
+
+export class AssetUpdateFailureError extends ApiError {
+  readonly category: AssetUpdateFailureCategory;
+  readonly rowsAffected: number;
+
+  constructor(category: AssetUpdateFailureCategory, rowsAffected: number) {
+    super(apiCodeForFailure(category), "Asset update failed");
+    this.name = "AssetUpdateFailureError";
+    this.category = category;
+    this.rowsAffected = rowsAffected;
+  }
+}
+
+interface Dependencies {
   readonly repository: AssetRepository;
   readonly auditSink: AuditSink;
 }
 
-/** Updates an asset's display reference and/or current owner customer. */
 export async function updateAsset(
   assetId: string,
   rawInput: unknown,
   context: RequestContext,
-  deps: UpdateAssetDeps,
-): Promise<Asset> {
+  dependencies: Dependencies,
+): Promise<AssetUpdateSuccess> {
   const input = updateAssetSchema.parse(rawInput);
-
-  const existing = await deps.repository.findById(assetId);
+  const existing = await dependencies.repository.findById(assetId);
   if (!existing) {
-    throw new ApiError("not_found", `Asset not found: ${assetId}`);
+    throw new ApiError("not_found", "Asset is not available in the authenticated tenant");
   }
 
   const scope = resolveWritePartnerId(context.actor, existing.partnerId);
   if (!scope.ok) {
-    throw new ApiError("forbidden", `Cannot act on partner ${existing.partnerId}: ${scope.reason}`);
+    throw new ApiError("forbidden", "Asset is not available in the authenticated tenant");
   }
 
-  const updated = await deps.repository.update(assetId, input);
-  if (!updated) {
-    throw new ApiError("not_found", `Asset not found: ${assetId}`);
+  const result = await dependencies.repository.update(assetId, scope.partnerId, input);
+  if (!result.ok) {
+    throw new AssetUpdateFailureError(result.category, result.rowsAffected);
   }
 
-  await deps.auditSink.record({
+  await dependencies.auditSink.record({
     correlationId: context.correlationId,
     actorType: "user",
     actorUserId: context.actor.userId,
-    partnerId: scope.partnerId,
+    partnerId: null,
     action: "asset.update",
-    resourceType: "asset.assets",
-    resourceId: assetId,
+    resourceType: "asset",
+    resourceId: null,
     outcome: "success",
+    metadata: { rowsAffected: result.rowsAffected },
   });
 
-  return updated;
+  return { asset: result.asset, rowsAffected: result.rowsAffected };
 }

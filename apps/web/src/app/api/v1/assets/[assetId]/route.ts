@@ -23,7 +23,7 @@ export const PATCH = withApiParamsRoute<RouteParams>(async (request, params, cor
   const actor = await requireApiPermission(ASSETS_PERMISSIONS.MANAGE);
   const body = await readJsonBody(request);
   const updated = await updateAssetUseCase(params.assetId, body, { actor, correlationId });
-  return apiOk(updated, correlationId);
+  return apiOk(updated.asset, correlationId);
 });
 
 /**

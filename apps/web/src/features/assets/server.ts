@@ -5,7 +5,7 @@ import type { BoundedPage, BoundedPageRequest } from "@/shared/lib/pagination";
 import { changeAssetStatus } from "./application/commands/change-asset-status";
 import { createAsset } from "./application/commands/create-asset";
 import { retireAsset } from "./application/commands/retire-asset";
-import { updateAsset } from "./application/commands/update-asset";
+import { updateAsset, type AssetUpdateSuccess } from "./application/commands/update-asset";
 import type { RequestContext } from "./application/ports/request-context";
 import { getAsset } from "./application/queries/get-asset";
 import { getAssetTimeline } from "./application/queries/get-asset-timeline";
@@ -65,7 +65,7 @@ export async function updateAssetUseCase(
   assetId: string,
   rawInput: unknown,
   context: RequestContext,
-): Promise<Asset> {
+): Promise<AssetUpdateSuccess> {
   return updateAsset(assetId, rawInput, context, { repository: await repository(), auditSink });
 }
 

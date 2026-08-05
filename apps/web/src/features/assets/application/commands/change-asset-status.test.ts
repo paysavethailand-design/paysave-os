@@ -37,7 +37,7 @@ function fakeRepository(overrides: Partial<AssetRepository> = {}): AssetReposito
     findById: async () => existing,
     assetTypeExists: async () => true,
     create: async () => existing,
-    update: async () => existing,
+    update: async () => ({ ok: true, asset: existing, rowsAffected: 1 }),
     changeStatus: async (id, transition: AssetStatusTransition) => ({
       ...existing,
       id,

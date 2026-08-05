@@ -1,6 +1,7 @@
 export interface FakePostgrestResult<T = unknown> {
   readonly data: T | null;
   readonly error: { readonly message: string; readonly code?: string } | null;
+  readonly count?: number | null;
 }
 
 export interface RecordedCall {

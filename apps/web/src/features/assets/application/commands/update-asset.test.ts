@@ -35,10 +35,15 @@ function fakeRepository(overrides: Partial<AssetRepository> = {}): AssetReposito
     findById: async () => existing,
     assetTypeExists: async () => true,
     create: async () => existing,
-    update: async (id, input) => ({
-      ...existing,
-      id,
-      displayRef: input.displayRef ?? existing.displayRef,
+    update: async (id, _partnerId, input) => ({
+      ok: true,
+      rowsAffected: 1,
+      asset: {
+        ...existing,
+        id,
+        displayRef: input.displayRef ?? existing.displayRef,
+        versionNo: input.expectedVersionNo + 1,
+      },
     }),
     changeStatus: async () => null,
     ...overrides,
@@ -46,24 +51,59 @@ function fakeRepository(overrides: Partial<AssetRepository> = {}): AssetReposito
 }
 
 describe("updateAsset", () => {
-  it("updates the display reference", async () => {
+  it("updates the display reference without logging asset or tenant identifiers", async () => {
+    const auditSink = new RecordingAuditSink();
     const updated = await updateAsset(
       existing.id,
-      { displayRef: "New ref" },
+      { displayRef: "New ref", expectedVersionNo: 1 },
       { actor, correlationId: "c1" },
       {
         repository: fakeRepository(),
+        auditSink,
+      },
+    );
+    expect(updated.asset.displayRef).toBe("New ref");
+    expect(updated.rowsAffected).toBe(1);
+    expect(auditSink.all()[0]).toMatchObject({
+      partnerId: null,
+      resourceId: null,
+      metadata: { rowsAffected: 1 },
+    });
+  });
+
+  it("passes the authenticated tenant and expected version to the repository", async () => {
+    let captured: readonly unknown[] = [];
+    await updateAsset(
+      existing.id,
+      { displayRef: "New ref", expectedVersionNo: 1 },
+      { actor, correlationId: "c1" },
+      {
+        repository: fakeRepository({
+          update: async (...args) => {
+            captured = args;
+            return {
+              ok: true,
+              rowsAffected: 1,
+              asset: { ...existing, displayRef: "New ref", versionNo: 2 },
+            };
+          },
+        }),
         auditSink: new RecordingAuditSink(),
       },
     );
-    expect(updated.displayRef).toBe("New ref");
+
+    expect(captured).toEqual([
+      existing.id,
+      activePartnerId,
+      { displayRef: "New ref", expectedVersionNo: 1 },
+    ]);
   });
 
   it("404s when not found", async () => {
     await expect(
       updateAsset(
         "missing",
-        { displayRef: "x" },
+        { displayRef: "x", expectedVersionNo: 1 },
         { actor, correlationId: "c1" },
         {
           repository: fakeRepository({ findById: async () => null }),
@@ -78,7 +118,7 @@ describe("updateAsset", () => {
     await expect(
       updateAsset(
         existing.id,
-        { displayRef: "x" },
+        { displayRef: "x", expectedVersionNo: 1 },
         { actor, correlationId: "c1" },
         {
           repository: fakeRepository({ findById: async () => outside }),
@@ -86,5 +126,30 @@ describe("updateAsset", () => {
         },
       ),
     ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("fails closed when the repository reports a version conflict", async () => {
+    await expect(
+      updateAsset(
+        existing.id,
+        { displayRef: "x", expectedVersionNo: 1 },
+        { actor, correlationId: "c1" },
+        {
+          repository: fakeRepository({
+            update: async () => ({
+              ok: false,
+              category: "VERSION_CONFLICT",
+              rowsAffected: 0,
+            }),
+          }),
+          auditSink: new RecordingAuditSink(),
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: "conflict",
+      name: "AssetUpdateFailureError",
+      category: "VERSION_CONFLICT",
+      rowsAffected: 0,
+    });
   });
 });

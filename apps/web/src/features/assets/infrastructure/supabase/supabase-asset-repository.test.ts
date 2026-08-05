@@ -17,7 +17,11 @@ const row = {
 };
 
 function repositoryWith(
-  responses: ReadonlyArray<{ data: unknown; error: { message: string } | null }>,
+  responses: ReadonlyArray<{
+    data: unknown;
+    error: { message: string; code?: string } | null;
+    count?: number | null;
+  }>,
 ) {
   const client = new FakeSupabaseClient(responses);
   return { repository: new SupabaseAssetRepository(client as unknown as SupabaseClient), client };
@@ -44,26 +48,118 @@ describe("SupabaseAssetRepository", () => {
 
   it("updates display_ref and returns the database-confirmed row", async () => {
     const updatedRow = { ...row, display_ref: "Toyota Camry - ABC-1234-TEST", version_no: 2 };
-    const { repository, client } = repositoryWith([{ data: updatedRow, error: null }]);
+    const { repository, client } = repositoryWith([{ data: [updatedRow], error: null, count: 1 }]);
 
     await expect(
-      repository.update(row.id, { displayRef: "Toyota Camry - ABC-1234-TEST" }),
+      repository.update(row.id, row.partner_id, {
+        displayRef: "Toyota Camry - ABC-1234-TEST",
+        expectedVersionNo: 1,
+      }),
     ).resolves.toMatchObject({
-      displayRef: "Toyota Camry - ABC-1234-TEST",
-      versionNo: 2,
+      ok: true,
+      rowsAffected: 1,
+      asset: {
+        displayRef: "Toyota Camry - ABC-1234-TEST",
+        versionNo: 2,
+        updatedAt: updatedRow.updated_at,
+      },
     });
 
     expect(client.recordedBuilders()[0]?.recordedCalls()).toEqual([
-      { method: "update", args: [{ display_ref: "Toyota Camry - ABC-1234-TEST" }] },
+      {
+        method: "update",
+        args: [{ display_ref: "Toyota Camry - ABC-1234-TEST", version_no: 2 }, { count: "exact" }],
+      },
       { method: "eq", args: ["id", row.id] },
+      { method: "eq", args: ["partner_id", row.partner_id] },
+      { method: "eq", args: ["version_no", 1] },
       {
         method: "select",
         args: [
           "id, partner_id, asset_type_id, business_object_id, display_ref, current_status_code, current_owner_customer_id, version_no, created_at, updated_at",
         ],
       },
-      { method: "maybeSingle", args: [] },
     ]);
+  });
+
+  it("classifies an explicit database privilege denial without exposing its raw message", async () => {
+    const { repository } = repositoryWith([
+      {
+        data: null,
+        error: { code: "42501", message: `permission denied for ${row.id}` },
+        count: 0,
+      },
+    ]);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({ ok: false, category: "RLS_OR_PRIVILEGE", rowsAffected: 0 });
+  });
+
+  it("classifies an integrity constraint without exposing its raw message", async () => {
+    const { repository } = repositoryWith([
+      {
+        data: null,
+        error: { code: "23514", message: `constraint rejected ${row.partner_id}` },
+        count: 0,
+      },
+    ]);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({ ok: false, category: "CONSTRAINT_VIOLATION", rowsAffected: 0 });
+  });
+
+  it("classifies a zero-row update as a version conflict when the scoped row advanced", async () => {
+    const { repository } = repositoryWith([
+      { data: [], error: null, count: 0 },
+      { data: { version_no: 2 }, error: null },
+    ]);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({ ok: false, category: "VERSION_CONFLICT", rowsAffected: 0 });
+  });
+
+  it("classifies a hidden zero-row update without leaking whether another tenant owns it", async () => {
+    const { repository } = repositoryWith([
+      { data: [], error: null, count: 0 },
+      { data: null, error: null },
+    ]);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      category: "NOT_FOUND_OR_WRONG_TENANT",
+      rowsAffected: 0,
+    });
+  });
+
+  it("classifies a visible same-version zero-row update as RLS or privilege denial", async () => {
+    const { repository } = repositoryWith([
+      { data: [], error: null, count: 0 },
+      { data: { version_no: 1 }, error: null },
+    ]);
+
+    await expect(
+      repository.update(row.id, row.partner_id, {
+        displayRef: "INV-TEST",
+        expectedVersionNo: 1,
+      }),
+    ).resolves.toEqual({ ok: false, category: "RLS_OR_PRIVILEGE", rowsAffected: 0 });
   });
 
   it("changeStatus executes one atomic RPC carrying the expected version and audit correlation", async () => {

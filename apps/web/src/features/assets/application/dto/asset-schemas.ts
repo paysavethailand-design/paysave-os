@@ -18,6 +18,7 @@ export const updateAssetSchema = z
   .object({
     displayRef: displayRefSchema.optional(),
     currentOwnerCustomerId: z.uuid().nullable().optional(),
+    expectedVersionNo: z.number().int().positive(),
   })
   .refine((value) => value.displayRef !== undefined || value.currentOwnerCustomerId !== undefined, {
     message: "At least one field must be provided",

@@ -3,6 +3,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Asset } from "../domain/entities/asset";
+
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+
 import {
   applyInventorySaveResult,
   InventoryManagementView,
@@ -80,6 +84,26 @@ describe("InventoryManagementView", () => {
     );
   });
 
+  it("submits the database-confirmed version as expectedVersionNo", () => {
+    const source = readFileSync(
+      new URL("./inventory-management-view.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toMatch(/expectedVersionNo:\s*currentAsset\.versionNo/);
+  });
+
+  it("refreshes and reconciles rows after a failed save so a conflict can be retried", () => {
+    const source = readFileSync(
+      new URL("./inventory-management-view.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toContain("const router = useRouter()");
+    expect(source).toMatch(/useEffect\(\(\) => setRows\(assets\), \[assets\]\)/);
+    expect(source).toMatch(/if \(!result\.ok\) \{\s*router\.refresh\(\)/);
+  });
+
   it("renders a continuation link when another tenant-scoped page exists", () => {
     const saveAction: InventorySaveAction = vi.fn();
     const html = renderToStaticMarkup(
@@ -99,7 +123,12 @@ describe("InventoryManagementView", () => {
 
 describe("applyInventorySaveResult", () => {
   it("replaces the saved row and exposes success beside the edited asset", () => {
-    const updated = { ...asset, displayRef: "INV-001-TEST", versionNo: 2 };
+    const updated = {
+      ...asset,
+      displayRef: "INV-001-TEST",
+      versionNo: 2,
+      updatedAt: "2026-08-05T13:45:00.000Z",
+    };
 
     expect(
       applyInventorySaveResult([asset], asset.id, {

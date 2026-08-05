@@ -2,7 +2,8 @@
 
 import { Badge, Button, Card, CardContent, CardHeader, Input } from "@paysave/ui";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 import type { Asset } from "../domain/entities/asset";
 import type { InventoryDashboardModel } from "../application/queries/project-inventory-dashboard";
 import { InventoryDashboardView } from "./inventory-dashboard-view";
@@ -23,6 +24,7 @@ export type InventorySaveResult =
 export type InventorySaveAction = (input: {
   readonly assetId: string;
   readonly displayRef: string;
+  readonly expectedVersionNo: number;
 }) => Promise<InventorySaveResult>;
 
 interface InventorySaveNotice {
@@ -60,11 +62,14 @@ export function InventoryManagementView({
   readonly saveAction: InventorySaveAction;
   readonly nextCursor?: string | null;
 }) {
+  const router = useRouter();
   const [rows, setRows] = useState(assets);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<InventorySaveNotice | null>(null);
+
+  useEffect(() => setRows(assets), [assets]);
 
   function beginEdit(asset: Asset) {
     setEditingId(asset.id);
@@ -74,14 +79,30 @@ export function InventoryManagementView({
 
   async function submitEdit(event: FormEvent<HTMLFormElement>, assetId: string) {
     event.preventDefault();
+    const currentAsset = rows.find((row) => row.id === assetId);
+    if (!currentAsset) {
+      setNotice({
+        assetId,
+        kind: "error",
+        text: "ไม่สามารถระบุรายการ Inventory ที่ต้องการบันทึกได้",
+      });
+      return;
+    }
     setSavingId(assetId);
     setNotice(null);
     try {
-      const result = await saveAction({ assetId, displayRef: draft });
+      const result = await saveAction({
+        assetId,
+        displayRef: draft,
+        expectedVersionNo: currentAsset.versionNo,
+      });
       const nextNotice = applyInventorySaveResult(rows, assetId, result).notice;
       if (result.ok) {
         setRows((current) => applyInventorySaveResult(current, assetId, result).rows);
         setEditingId(null);
+      }
+      if (!result.ok) {
+        router.refresh();
       }
       setNotice(nextNotice);
     } catch {

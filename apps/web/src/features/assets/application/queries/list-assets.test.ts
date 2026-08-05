@@ -38,7 +38,7 @@ describe("listAssets", () => {
       findById: async () => null,
       assetTypeExists: async () => true,
       create: async () => asset("1"),
-      update: async () => null,
+      update: async () => ({ ok: false, category: "DATABASE_ERROR", rowsAffected: 0 }),
       changeStatus: async () => null,
     };
 

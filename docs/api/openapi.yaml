@@ -1389,9 +1389,15 @@ components:
           format: uuid
     UpdateAssetInput:
       type: object
+      required: [expectedVersionNo]
+      additionalProperties: false
       properties:
         displayRef:
           type: string
         currentOwnerCustomerId:
           type: [string, "null"]
           format: uuid
+        expectedVersionNo:
+          type: integer
+          minimum: 1
+          description: Database-confirmed asset version used for optimistic concurrency control.
