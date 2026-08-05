@@ -34,9 +34,14 @@ test("resolves GitHub release identity from the CI release version, full GITHUB_
   });
 });
 
-test("uses package version and Vercel Git system revision for a Vercel build", () => {
+test("uses VERCEL_GIT_COMMIT_SHA as the exclusive source revision for a Vercel build", () => {
   const identity = resolveReleaseIdentity({
-    environment: { VERCEL_GIT_COMMIT_SHA: vercelSha },
+    environment: {
+      VERCEL: "1",
+      VERCEL_GIT_COMMIT_SHA: vercelSha,
+      VERCEL_GIT_COMMIT_REF: "fix/release-identity",
+      PAYSAVE_SOURCE_REVISION: "branch/ref-must-not-win",
+    },
     packageVersion: "0.1.0",
     now: () => new Date(buildTime),
   });
@@ -48,7 +53,39 @@ test("uses package version and Vercel Git system revision for a Vercel build", (
   });
 });
 
-test("preserves a frozen PAYSAVE identity when ambient provider variables are also present", () => {
+test("rejects a Vercel build when the commit SHA is missing instead of falling back to a ref", () => {
+  assert.throws(
+    () =>
+      resolveReleaseIdentity({
+        environment: {
+          VERCEL: "1",
+          VERCEL_GIT_COMMIT_REF: "fix/release-identity",
+          PAYSAVE_SOURCE_REVISION: "3".repeat(40),
+        },
+        packageVersion: "0.1.0",
+        now: () => new Date(buildTime),
+      }),
+    /VERCEL_GIT_COMMIT_SHA is required/,
+  );
+});
+
+test("rejects a Vercel commit SHA that is not exactly 40 lowercase hex characters", () => {
+  assert.throws(
+    () =>
+      resolveReleaseIdentity({
+        environment: {
+          VERCEL: "1",
+          VERCEL_GIT_COMMIT_SHA: "abc123",
+          VERCEL_GIT_COMMIT_REF: "fix/release-identity",
+        },
+        packageVersion: "0.1.0",
+        now: () => new Date(buildTime),
+      }),
+    /full 40-character commit SHA/,
+  );
+});
+
+test("preserves a frozen PAYSAVE identity outside Vercel when ambient provider variables are also present", () => {
   const frozenSha = "3".repeat(40);
   const identity = resolveReleaseIdentity({
     environment: {

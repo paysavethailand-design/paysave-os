@@ -91,7 +91,7 @@ function checkReleaseIdentity(environment: NodeJS.ProcessEnv): ReadinessCheck {
     version &&
     /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(version) &&
     revision &&
-    /^[a-f0-9]{40}$/i.test(revision) &&
+    /^[a-f0-9]{40}$/.test(revision) &&
     buildTime &&
     !Number.isNaN(Date.parse(buildTime)),
   );

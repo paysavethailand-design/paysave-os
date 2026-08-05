@@ -25,13 +25,16 @@ export function resolveReleaseIdentity({
     environment.PAYSAVE_RELEASE_VERSION ?? environment.RELEASE_VERSION ?? packageVersion,
     "release version",
   );
-  const sourceRevision = requiredString(
-    environment.PAYSAVE_SOURCE_REVISION ??
-      environment.GITHUB_SHA ??
-      environment.VERCEL_GIT_COMMIT_SHA ??
-      fallbackRevision,
-    "source revision",
-  );
+  const sourceRevision =
+    environment.VERCEL === "1"
+      ? requiredString(environment.VERCEL_GIT_COMMIT_SHA, "VERCEL_GIT_COMMIT_SHA")
+      : requiredString(
+          environment.PAYSAVE_SOURCE_REVISION ??
+            environment.GITHUB_SHA ??
+            environment.VERCEL_GIT_COMMIT_SHA ??
+            fallbackRevision,
+          "source revision",
+        );
   if (!fullCommitSha.test(sourceRevision)) {
     throw new Error("source revision must be a full 40-character commit SHA");
   }

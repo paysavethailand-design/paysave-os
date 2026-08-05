@@ -104,6 +104,32 @@ describe("GET /readyz", () => {
     expect(payload.checks).toContainEqual({ name: "production_runtime_contract", ok: true });
   });
 
+  it("fails release_identity when sourceRevision contains a branch/ref value", () => {
+    const payload = buildReadinessPayload({
+      ...validEnvironment,
+      PAYSAVE_SOURCE_REVISION: "fix/release-identity",
+    });
+    expect(payload.status).toBe("not_ready");
+    expect(payload.checks).toContainEqual({
+      name: "release_identity",
+      ok: false,
+      detail: "release_identity_invalid_or_missing",
+    });
+  });
+
+  it("fails release_identity when sourceRevision is not exactly 40 lowercase hex characters", () => {
+    const payload = buildReadinessPayload({
+      ...validEnvironment,
+      PAYSAVE_SOURCE_REVISION: "A".repeat(40),
+    });
+    expect(payload.status).toBe("not_ready");
+    expect(payload.checks).toContainEqual({
+      name: "release_identity",
+      ok: false,
+      detail: "release_identity_invalid_or_missing",
+    });
+  });
+
   it("fails closed when field encryption config is absent", () => {
     const env = { ...validEnvironment };
     delete env.PAYSAVE_FIELD_ENCRYPTION_KEY;
