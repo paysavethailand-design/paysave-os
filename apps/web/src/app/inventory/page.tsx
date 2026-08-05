@@ -6,6 +6,7 @@ import {
   getInventoryDashboardUseCase,
   listAssetsUseCase,
 } from "@/features/assets/server";
+import { saveInventoryAssetAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function InventoryPage({ searchParams }: PageProps) {
       canManage={hasPermission(actor, ASSETS_PERMISSIONS.MANAGE)}
       model={model}
       nextCursor={page.nextCursor}
+      saveAction={saveInventoryAssetAction}
     />
   );
 }

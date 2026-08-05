@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Asset } from "../domain/entities/asset";
-import { InventoryManagementView, saveInventoryAsset } from "./inventory-management-view";
+import {
+  applyInventorySaveResult,
+  InventoryManagementView,
+  type InventorySaveAction,
+} from "./inventory-management-view";
 
 const asset: Asset = {
   id: "a1",
@@ -35,8 +40,14 @@ const model = {
 
 describe("InventoryManagementView", () => {
   it("renders list and detail controls but hides edit without assets.manage", () => {
+    const saveAction: InventorySaveAction = vi.fn();
     const html = renderToStaticMarkup(
-      createElement(InventoryManagementView, { model, assets: [asset], canManage: false }),
+      createElement(InventoryManagementView, {
+        model,
+        assets: [asset],
+        canManage: false,
+        saveAction,
+      }),
     );
 
     expect(html).toContain("INV-001");
@@ -45,20 +56,39 @@ describe("InventoryManagementView", () => {
   });
 
   it("shows the edit control when assets.manage is present", () => {
+    const saveAction: InventorySaveAction = vi.fn();
     const html = renderToStaticMarkup(
-      createElement(InventoryManagementView, { model, assets: [asset], canManage: true }),
+      createElement(InventoryManagementView, {
+        model,
+        assets: [asset],
+        canManage: true,
+        saveAction,
+      }),
     );
 
     expect(html).toContain("แก้ไข Inventory");
   });
 
+  it("uses a functional row update so overlapping saves cannot restore stale titles", () => {
+    const source = readFileSync(
+      new URL("./inventory-management-view.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toMatch(
+      /setRows\(\(current\)\s*=>\s*applyInventorySaveResult\(current,\s*assetId,\s*result\)\.rows\)/,
+    );
+  });
+
   it("renders a continuation link when another tenant-scoped page exists", () => {
+    const saveAction: InventorySaveAction = vi.fn();
     const html = renderToStaticMarkup(
       createElement(InventoryManagementView, {
         model,
         assets: [asset],
         canManage: true,
         nextCursor: "cursor-2",
+        saveAction,
       }),
     );
 
@@ -67,20 +97,41 @@ describe("InventoryManagementView", () => {
   });
 });
 
-describe("saveInventoryAsset", () => {
-  it("saves through the existing assets.manage PATCH endpoint", async () => {
-    const fetcher = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { ...asset, displayRef: "INV-001-EDITED" } }),
-    });
+describe("applyInventorySaveResult", () => {
+  it("replaces the saved row and exposes success beside the edited asset", () => {
+    const updated = { ...asset, displayRef: "INV-001-TEST", versionNo: 2 };
 
-    await expect(saveInventoryAsset("a1", "INV-001-EDITED", fetcher)).resolves.toMatchObject({
-      displayRef: "INV-001-EDITED",
+    expect(
+      applyInventorySaveResult([asset], asset.id, {
+        ok: true,
+        asset: updated,
+        message: "บันทึก Inventory เรียบร้อย",
+        correlationId: "save-1",
+      }),
+    ).toEqual({
+      rows: [updated],
+      notice: {
+        assetId: asset.id,
+        kind: "success",
+        text: "บันทึก Inventory เรียบร้อย (รหัสอ้างอิง: save-1)",
+      },
     });
-    expect(fetcher).toHaveBeenCalledWith("/api/v1/assets/a1", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayRef: "INV-001-EDITED" }),
+  });
+
+  it("keeps the existing row and exposes a server error beside the edit form", () => {
+    expect(
+      applyInventorySaveResult([asset], asset.id, {
+        ok: false,
+        message: "Request validation failed",
+        correlationId: "save-2",
+      }),
+    ).toEqual({
+      rows: [asset],
+      notice: {
+        assetId: asset.id,
+        kind: "error",
+        text: "Request validation failed (รหัสอ้างอิง: save-2)",
+      },
     });
   });
 });

@@ -42,6 +42,30 @@ describe("SupabaseAssetRepository", () => {
     );
   });
 
+  it("updates display_ref and returns the database-confirmed row", async () => {
+    const updatedRow = { ...row, display_ref: "Toyota Camry - ABC-1234-TEST", version_no: 2 };
+    const { repository, client } = repositoryWith([{ data: updatedRow, error: null }]);
+
+    await expect(
+      repository.update(row.id, { displayRef: "Toyota Camry - ABC-1234-TEST" }),
+    ).resolves.toMatchObject({
+      displayRef: "Toyota Camry - ABC-1234-TEST",
+      versionNo: 2,
+    });
+
+    expect(client.recordedBuilders()[0]?.recordedCalls()).toEqual([
+      { method: "update", args: [{ display_ref: "Toyota Camry - ABC-1234-TEST" }] },
+      { method: "eq", args: ["id", row.id] },
+      {
+        method: "select",
+        args: [
+          "id, partner_id, asset_type_id, business_object_id, display_ref, current_status_code, current_owner_customer_id, version_no, created_at, updated_at",
+        ],
+      },
+      { method: "maybeSingle", args: [] },
+    ]);
+  });
+
   it("changeStatus executes one atomic RPC carrying the expected version and audit correlation", async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: [{ ...row, current_status_code: "retired", version_no: 2 }],

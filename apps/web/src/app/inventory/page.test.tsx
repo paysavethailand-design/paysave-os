@@ -44,6 +44,7 @@ describe("InventoryPage", () => {
     expect(element.props).toMatchObject({
       assets: [{ id: "a1" }],
       canManage: true,
+      saveAction: expect.any(Function),
     });
   });
 

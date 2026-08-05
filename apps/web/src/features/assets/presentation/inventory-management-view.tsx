@@ -7,68 +7,89 @@ import type { Asset } from "../domain/entities/asset";
 import type { InventoryDashboardModel } from "../application/queries/project-inventory-dashboard";
 import { InventoryDashboardView } from "./inventory-dashboard-view";
 
-interface InventoryApiResponse {
-  readonly data?: Asset;
-  readonly error?: { readonly message?: string };
+export type InventorySaveResult =
+  | {
+      readonly ok: true;
+      readonly asset: Asset;
+      readonly message: string;
+      readonly correlationId: string;
+    }
+  | {
+      readonly ok: false;
+      readonly message: string;
+      readonly correlationId: string;
+    };
+
+export type InventorySaveAction = (input: {
+  readonly assetId: string;
+  readonly displayRef: string;
+}) => Promise<InventorySaveResult>;
+
+interface InventorySaveNotice {
+  readonly assetId: string;
+  readonly kind: "success" | "error";
+  readonly text: string;
 }
 
-export type InventoryFetcher = (
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) => Promise<{ readonly ok: boolean; json(): Promise<InventoryApiResponse> }>;
-
-/** Persists one Inventory edit through the existing `assets.manage` API gate. */
-export async function saveInventoryAsset(
+/** Reconciles the list title from the row returned by the database-backed Server Action. */
+export function applyInventorySaveResult(
+  rows: readonly Asset[],
   assetId: string,
-  displayRef: string,
-  fetcher: InventoryFetcher = fetch,
-): Promise<Asset> {
-  const response = await fetcher(`/api/v1/assets/${encodeURIComponent(assetId)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ displayRef }),
-  });
-  const body = await response.json();
-  if (!response.ok || !body.data) {
-    throw new Error(body.error?.message ?? "บันทึก Inventory ไม่สำเร็จ");
+  result: InventorySaveResult,
+): { readonly rows: readonly Asset[]; readonly notice: InventorySaveNotice } {
+  const text = `${result.message} (รหัสอ้างอิง: ${result.correlationId})`;
+  if (!result.ok) {
+    return { rows, notice: { assetId, kind: "error", text } };
   }
-  return body.data;
+  return {
+    rows: rows.map((row) => (row.id === assetId ? result.asset : row)),
+    notice: { assetId, kind: "success", text },
+  };
 }
 
 export function InventoryManagementView({
   assets,
   canManage,
   model,
+  saveAction,
   nextCursor = null,
 }: {
   readonly assets: readonly Asset[];
   readonly canManage: boolean;
   readonly model: InventoryDashboardModel;
+  readonly saveAction: InventorySaveAction;
   readonly nextCursor?: string | null;
 }) {
   const [rows, setRows] = useState(assets);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<InventorySaveNotice | null>(null);
 
   function beginEdit(asset: Asset) {
     setEditingId(asset.id);
     setDraft(asset.displayRef);
-    setMessage(null);
+    setNotice(null);
   }
 
   async function submitEdit(event: FormEvent<HTMLFormElement>, assetId: string) {
     event.preventDefault();
     setSavingId(assetId);
-    setMessage(null);
+    setNotice(null);
     try {
-      const updated = await saveInventoryAsset(assetId, draft.trim());
-      setRows((current) => current.map((row) => (row.id === assetId ? updated : row)));
-      setEditingId(null);
-      setMessage("บันทึก Inventory เรียบร้อย");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "บันทึก Inventory ไม่สำเร็จ");
+      const result = await saveAction({ assetId, displayRef: draft });
+      const nextNotice = applyInventorySaveResult(rows, assetId, result).notice;
+      if (result.ok) {
+        setRows((current) => applyInventorySaveResult(current, assetId, result).rows);
+        setEditingId(null);
+      }
+      setNotice(nextNotice);
+    } catch {
+      setNotice({
+        assetId,
+        kind: "error",
+        text: "ไม่สามารถติดต่อ Server Action ได้ กรุณาลองอีกครั้ง",
+      });
     } finally {
       setSavingId(null);
     }
@@ -85,8 +106,6 @@ export function InventoryManagementView({
           </h2>
           <Badge variant="neutral">{rows.length.toLocaleString()} รายการ</Badge>
         </div>
-
-        {message ? <p aria-live="polite">{message}</p> : null}
 
         {rows.length === 0 ? (
           <Card>
@@ -106,6 +125,19 @@ export function InventoryManagementView({
                   <Badge variant="neutral">v{asset.versionNo}</Badge>
                 </CardHeader>
                 <CardContent>
+                  {notice?.assetId === asset.id ? (
+                    <p
+                      aria-live={notice.kind === "error" ? "assertive" : "polite"}
+                      className={
+                        notice.kind === "error"
+                          ? "mb-4 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger"
+                          : "mb-4 rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success"
+                      }
+                      role={notice.kind === "error" ? "alert" : "status"}
+                    >
+                      {notice.text}
+                    </p>
+                  ) : null}
                   <details>
                     <summary className="cursor-pointer font-medium">
                       เปิดรายละเอียด Inventory
@@ -139,7 +171,10 @@ export function InventoryManagementView({
                             ชื่ออ้างอิง Inventory
                             <Input
                               className="mt-2"
+                              disabled={savingId === asset.id}
                               maxLength={2000}
+                              minLength={1}
+                              name="displayRef"
                               onChange={(event) => setDraft(event.target.value)}
                               required
                               value={draft}
@@ -149,6 +184,7 @@ export function InventoryManagementView({
                             {savingId === asset.id ? "กำลังบันทึก…" : "บันทึกการแก้ไข"}
                           </Button>
                           <Button
+                            disabled={savingId === asset.id}
                             onClick={() => setEditingId(null)}
                             type="button"
                             variant="secondary"
