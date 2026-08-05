@@ -55,10 +55,10 @@ import type { RoleCode } from "@paysave/security";
 export const DASHBOARD_PERSONA_ROLES: Record<DashboardPersona, readonly RoleCode[]> = {
   executive: ["super_admin", "admin"],
   admin: ["admin", "super_admin"],
-  partner: ["partner"],
-  field: ["supervisor", "agent"],
-  supervisor: ["supervisor"],
-  personal: ["agent"],
+  partner: ["partner", "admin", "super_admin"],
+  field: ["supervisor", "agent", "admin", "super_admin"],
+  supervisor: ["supervisor", "admin", "super_admin"],
+  personal: ["agent", "admin", "super_admin"],
 } as const;
 
 export function canAccessDashboard(persona: DashboardPersona, roles: readonly RoleCode[]): boolean {

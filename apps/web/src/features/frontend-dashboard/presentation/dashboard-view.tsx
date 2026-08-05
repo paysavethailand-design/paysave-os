@@ -17,6 +17,7 @@ import {
   Gauge,
   ShieldCheck,
 } from "lucide-react";
+import type { PermissionCode, RoleCode } from "@paysave/security";
 import type { DashboardModel } from "../domain/dashboard";
 import { ActivityTable } from "./activity-table";
 import { LazyDashboardCharts } from "./lazy-dashboard-charts";
@@ -25,12 +26,16 @@ const icons = [CircleDollarSign, Gauge, Activity, ShieldCheck] as const;
 export function DashboardView({
   canViewInventory,
   model,
+  permissions,
+  roles,
 }: {
   readonly canViewInventory: boolean;
   readonly model: DashboardModel;
+  readonly permissions: readonly PermissionCode[];
+  readonly roles: readonly RoleCode[];
 }) {
   return (
-    <DashboardShell canViewInventory={canViewInventory}>
+    <DashboardShell canViewInventory={canViewInventory} permissions={permissions} roles={roles}>
       <div className="space-y-6">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>

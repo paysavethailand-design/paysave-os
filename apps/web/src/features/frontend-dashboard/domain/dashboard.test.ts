@@ -20,4 +20,23 @@ describe("dashboard role personas", () => {
     expect(canAccessDashboard("admin", ["super_admin"])).toBe(true);
     expect(canAccessDashboard("admin", ["admin"])).toBe(true);
   });
+
+  it.each(["executive", "admin", "partner", "field", "supervisor", "personal"] as const)(
+    "allows tenant admin roles into the %s dashboard",
+    (persona) => {
+      expect(canAccessDashboard(persona, ["admin"])).toBe(true);
+      expect(canAccessDashboard(persona, ["super_admin"])).toBe(true);
+    },
+  );
+
+  it("does not widen partner, supervisor, or agent beyond their original dashboards", () => {
+    expect(canAccessDashboard("partner", ["partner"])).toBe(true);
+    expect(canAccessDashboard("admin", ["partner"])).toBe(false);
+    expect(canAccessDashboard("supervisor", ["supervisor"])).toBe(true);
+    expect(canAccessDashboard("field", ["supervisor"])).toBe(true);
+    expect(canAccessDashboard("partner", ["supervisor"])).toBe(false);
+    expect(canAccessDashboard("personal", ["agent"])).toBe(true);
+    expect(canAccessDashboard("field", ["agent"])).toBe(true);
+    expect(canAccessDashboard("partner", ["agent"])).toBe(false);
+  });
 });

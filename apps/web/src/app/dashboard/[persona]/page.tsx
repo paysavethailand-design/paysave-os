@@ -31,7 +31,9 @@ export default async function DashboardPersonaPage({ params }: PageProps) {
     <FrontendDashboardPage
       canViewInventory={hasPermission(context, ASSETS_PERMISSIONS.READ)}
       client={client}
+      permissions={context.permissions}
       persona={persona}
+      roles={context.roles}
     />
   );
 }

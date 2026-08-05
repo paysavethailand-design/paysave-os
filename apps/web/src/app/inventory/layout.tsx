@@ -9,6 +9,8 @@ export default async function InventoryLayout({ children }: { readonly children:
   return (
     <DashboardShell
       canViewInventory={Boolean(actor && hasPermission(actor, ASSETS_PERMISSIONS.READ))}
+      permissions={actor?.permissions ?? []}
+      roles={actor?.roles ?? []}
     >
       {children}
     </DashboardShell>

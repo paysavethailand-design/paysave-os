@@ -52,11 +52,15 @@ describe("FrontendDashboardPage", () => {
     const rendered = await FrontendDashboardPage({
       canViewInventory: true,
       client: authenticatedClient,
+      permissions: ["assets.read"],
       persona: "admin",
+      roles: ["admin"],
     });
 
     expect(constructorSpy).toHaveBeenCalledWith(authenticatedClient);
     expect(getDashboard).toHaveBeenCalledWith("admin");
     expect(rendered.props.canViewInventory).toBe(true);
+    expect(rendered.props.permissions).toEqual(["assets.read"]);
+    expect(rendered.props.roles).toEqual(["admin"]);
   });
 });

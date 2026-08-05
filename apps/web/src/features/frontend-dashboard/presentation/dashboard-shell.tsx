@@ -38,34 +38,77 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
+import type { PermissionCode, RoleCode } from "@paysave/security";
 import { cn } from "@paysave/ui";
 import { signOutAction } from "@/features/auth/actions";
+import { RECOVERY_PERMISSIONS } from "@/features/recovery-core";
+import { canAccessDashboard, type DashboardPersona } from "../domain/dashboard";
 const navigation = [
-  { href: "/dashboard/executive", label: "Executive", icon: BarChart3 },
-  { href: "/dashboard/partner", label: "Partner", icon: Building2 },
-  { href: "/dashboard/admin", label: "Admin", icon: ShieldCheck },
-  { href: "/dashboard/field", label: "Field", icon: BriefcaseBusiness },
-  { href: "/inventory", label: "Inventory", icon: PackageOpen },
+  { href: "/dashboard/executive", label: "Executive", icon: BarChart3, persona: "executive" },
+  { href: "/dashboard/admin", label: "Admin", icon: ShieldCheck, persona: "admin" },
+  { href: "/dashboard/partner", label: "Partner", icon: Building2, persona: "partner" },
+  { href: "/dashboard/field", label: "Field", icon: BriefcaseBusiness, persona: "field" },
+  {
+    href: "/dashboard/supervisor",
+    label: "Supervisor",
+    icon: ClipboardList,
+    persona: "supervisor",
+  },
+  { href: "/dashboard/personal", label: "Personal", icon: UserRound, persona: "personal" },
 ] as const;
+const inventoryNavigation = { href: "/inventory", label: "Inventory", icon: PackageOpen } as const;
 const recoveryNavigation = [
-  { href: "/recovery/cases", label: "Recovery Cases", icon: HeartHandshake },
-  { href: "/recovery/assignments", label: "Assignments", icon: ClipboardList },
+  {
+    href: "/recovery/cases",
+    label: "Recovery Cases",
+    icon: HeartHandshake,
+    permission: RECOVERY_PERMISSIONS.CASES_READ,
+  },
+  {
+    href: "/recovery/assignments",
+    label: "Assignments",
+    icon: ClipboardList,
+    permission: RECOVERY_PERMISSIONS.ASSIGNMENTS_READ,
+  },
 ] as const;
 
-/** Keeps Inventory discoverability aligned with the verified `assets.read` claim. */
-export function getDashboardNavigation(canViewInventory: boolean) {
-  return navigation.filter((item) => item.href !== "/inventory" || canViewInventory);
+/** Keeps dashboard and Inventory discoverability aligned with route and permission gates. */
+export function getDashboardNavigation({
+  canViewInventory,
+  roles,
+}: {
+  readonly canViewInventory: boolean;
+  readonly roles: readonly RoleCode[];
+}) {
+  const dashboards = navigation.filter((item) =>
+    canAccessDashboard(item.persona as DashboardPersona, roles),
+  );
+  return canViewInventory ? [...dashboards, inventoryNavigation] : dashboards;
+}
+
+/** Uses the exact page permission codes so visible links cannot be expected authorization failures. */
+export function getRecoveryNavigation(permissions: readonly PermissionCode[]) {
+  return recoveryNavigation.filter((item) => permissions.includes(item.permission));
 }
 
 function Navigation({
   canViewInventory,
   mobile = false,
+  permissions,
+  roles,
 }: {
   readonly canViewInventory: boolean;
   readonly mobile?: boolean;
+  readonly permissions: readonly PermissionCode[];
+  readonly roles: readonly RoleCode[];
 }) {
   const pathname = usePathname();
-  const renderLink = (item: (typeof navigation)[number] | (typeof recoveryNavigation)[number]) => {
+  const renderLink = (
+    item:
+      | (typeof navigation)[number]
+      | (typeof recoveryNavigation)[number]
+      | typeof inventoryNavigation,
+  ) => {
     const active =
       pathname === item.href ||
       (item.href === "/recovery/cases" && pathname.startsWith("/recovery/cases/"));
@@ -93,18 +136,26 @@ function Navigation({
         <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.16em] text-slate-400">
           DASHBOARDS
         </p>
-        {getDashboardNavigation(canViewInventory).map(renderLink)}
+        {getDashboardNavigation({ canViewInventory, roles }).map(renderLink)}
       </div>
       <div className="space-y-1">
         <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.16em] text-slate-400">
           RECOVERY
         </p>
-        {recoveryNavigation.map(renderLink)}
+        {getRecoveryNavigation(permissions).map(renderLink)}
       </div>
     </nav>
   );
 }
-function SidebarContent({ canViewInventory }: { readonly canViewInventory: boolean }) {
+function SidebarContent({
+  canViewInventory,
+  permissions,
+  roles,
+}: {
+  readonly canViewInventory: boolean;
+  readonly permissions: readonly PermissionCode[];
+  readonly roles: readonly RoleCode[];
+}) {
   return (
     <div className="flex h-full flex-col bg-slate-950 text-white">
       <div className="flex h-20 items-center gap-3 px-6">
@@ -117,7 +168,7 @@ function SidebarContent({ canViewInventory }: { readonly canViewInventory: boole
         </div>
       </div>
       <Separator className="bg-white/10" />
-      <Navigation canViewInventory={canViewInventory} />
+      <Navigation canViewInventory={canViewInventory} permissions={permissions} roles={roles} />
       <div className="mt-auto p-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between">
@@ -151,15 +202,23 @@ export function DashboardSignOutForm() {
 export function DashboardShell({
   canViewInventory = false,
   children,
+  permissions = [],
+  roles = [],
 }: {
   readonly canViewInventory?: boolean;
   readonly children: ReactNode;
+  readonly permissions?: readonly PermissionCode[];
+  readonly roles?: readonly RoleCode[];
 }) {
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 lg:block">
-        <SidebarContent canViewInventory={canViewInventory} />
+        <SidebarContent
+          canViewInventory={canViewInventory}
+          permissions={permissions}
+          roles={roles}
+        />
       </aside>
       <div className="min-h-screen lg:pl-72">
         <header className="sticky top-0 z-30 border-b border-border/80 bg-surface/88 backdrop-blur-xl">
@@ -173,7 +232,11 @@ export function DashboardShell({
               <SheetContent className="p-0" side="left">
                 <SheetTitle className="sr-only">เมนูหลัก</SheetTitle>
                 <SheetDescription className="sr-only">เลือก Dashboard</SheetDescription>
-                <SidebarContent canViewInventory={canViewInventory} />
+                <SidebarContent
+                  canViewInventory={canViewInventory}
+                  permissions={permissions}
+                  roles={roles}
+                />
               </SheetContent>
             </Sheet>
             <div>

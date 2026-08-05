@@ -36,6 +36,51 @@ describe("resolvePaysaveClaims", () => {
     });
   });
 
+  it("emits the exact active-tenant permission set for an admin all-pages session", async () => {
+    const adminPermissions = [
+      "assets.read",
+      "assets.manage",
+      "cases.read",
+      "cases.manage",
+      "assignments.read",
+      "assignments.manage",
+      "partners.read",
+      "partners.manage",
+      "customers.read",
+      "customers.manage",
+      "reports.read",
+      "payments.read",
+      "commission.read",
+      "users.read",
+      "users.manage",
+      "roles.read",
+      "roles.manage",
+      "permissions.read",
+      "permissions.manage",
+    ];
+    const claims = await resolvePaysaveClaims(
+      userId,
+      source({
+        listEffectiveRoles: async () => [
+          { id: "1f2f6b8a-9b70-4e3a-8a2e-6f7a9b6c5d43", code: "admin" },
+        ],
+        listRolePermissions: async () =>
+          adminPermissions.map((code, index) => ({
+            permissionId: `admin-permission-${index}`,
+            code,
+            effect: "allow",
+          })),
+      }),
+    );
+
+    expect(claims).toMatchObject({
+      active_partner_id: partnerId,
+      tenant_scope: "active",
+      roles: ["admin"],
+      permissions: [...adminPermissions].sort(),
+    });
+  });
+
   it("allows login with a null partner but emits no roles or permissions", async () => {
     const claims = await resolvePaysaveClaims(
       userId,

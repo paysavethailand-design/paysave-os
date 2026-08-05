@@ -57,3 +57,4 @@ config/*.env
 *.sql
 !database/migrations/managed_staging/*.sql
 !database/tests/managed_staging_inventory_rls_verify.sql
+!database/tests/managed_staging_admin_access_verify.sql

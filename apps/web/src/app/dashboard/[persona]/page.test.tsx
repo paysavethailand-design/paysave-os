@@ -64,7 +64,9 @@ describe("DashboardPersonaPage", () => {
     expect(rendered.props).toEqual({
       canViewInventory: true,
       client: authenticatedClient,
+      permissions: ["assets.read"],
       persona: "admin",
+      roles: ["admin"],
     });
   });
 });

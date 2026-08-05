@@ -11,6 +11,8 @@ export default async function RecoveryLayout({ children }: { readonly children: 
     <RecoveryQueryProvider>
       <DashboardShell
         canViewInventory={Boolean(actor && hasPermission(actor, ASSETS_PERMISSIONS.READ))}
+        permissions={actor?.permissions ?? []}
+        roles={actor?.roles ?? []}
       >
         {children}
       </DashboardShell>

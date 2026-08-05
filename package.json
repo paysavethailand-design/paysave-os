@@ -20,8 +20,9 @@
     "generate:deployment-manifest": "node scripts/ci/generate-deployment-manifest-template.mjs",
     "lint": "npm run lint --workspaces --if-present",
     "production:gate": "node scripts/ci/evaluate-production-gate.mjs artifacts/production-readiness/stage5-5/PRODUCTION_GATE_EVIDENCE.json",
-    "test": "npm run test:architecture && npm run test:operations && npm run test:workspaces",
+    "test": "npm run test:architecture && npm run test:operations && npm run test:claims-hook && npm run test:workspaces",
     "test:architecture": "node --test scripts/check-architecture.test.mjs scripts/security-review-evidence.test.mjs",
+    "test:claims-hook": "vitest run supabase/functions/paysave-claims-hook/*.test.ts",
     "test:dependency-baseline": "node --test scripts/ci/check-dependency-baseline.test.mjs && node scripts/ci/check-dependency-baseline.mjs",
     "test:operations": "node --test scripts/ci/*.test.mjs scripts/performance/*.test.mjs tests/scripts/operations/*.test.mjs",
     "test:coverage": "npm run test --workspace=@paysave/web -- --coverage",
@@ -37,7 +38,8 @@
     "validate:openapi": "redocly lint docs/api/openapi.yaml docs/api/openapi-recovery-core.yaml --config redocly.yaml",
     "validate:production-runtime": "node scripts/ci/validate-production-runtime.mjs",
     "verify:database": "bash scripts/ci/verify-database.sh",
-    "verify:managed-staging-inventory-rls": "bash database/tests/managed_staging_inventory_rls_verify.sh"
+    "verify:managed-staging-inventory-rls": "bash database/tests/managed_staging_inventory_rls_verify.sh",
+    "verify:managed-staging-admin-access": "bash database/tests/managed_staging_admin_access_verify.sh"
   },
   "engines": {
     "node": ">=22.0.0"
