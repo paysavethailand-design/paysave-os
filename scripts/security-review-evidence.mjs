@@ -81,7 +81,14 @@ export async function verifySecurityReviewEvidence(projectRoot, artifactPath = D
     stored.violationCount === current.violationCount &&
     stored.sourceDigest === current.sourceDigest &&
     stored.sourceFileCount === current.sourceFileCount;
-  if (!matches) throw new Error("Security Review architecture evidence is missing or stale");
+  if (!matches) {
+    throw new Error(
+      `Security Review architecture evidence is missing or stale ` +
+        `(stored digest=${stored.sourceDigest}, files=${stored.sourceFileCount}, ` +
+        `violations=${stored.violationCount}; current digest=${current.sourceDigest}, ` +
+        `files=${current.sourceFileCount}, violations=${current.violationCount})`,
+    );
+  }
   return stored;
 }
 
