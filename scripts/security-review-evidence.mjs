@@ -36,7 +36,8 @@ async function sourceDigest(projectRoot) {
     const normalized = relative(root, file).split(sep).join("/");
     hash.update(normalized);
     hash.update("\0");
-    hash.update(await readFile(file));
+    const content = await readFile(file, "utf8");
+    hash.update(content.replace(/\r\n?/g, "\n"));
     hash.update("\0");
   }
   return { digest: hash.digest("hex"), fileCount: files.length };
