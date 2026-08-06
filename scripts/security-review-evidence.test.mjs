@@ -44,3 +44,19 @@ test("creates FAIL evidence when the architecture scanner reports a violation", 
   assert.equal(evidence.architectureGatePassed, false);
   assert.equal(evidence.violationCount, 1);
 });
+
+test("produces the same source digest across line-ending conventions", async () => {
+  const lfRoot = await createFixture({
+    "apps/web/src/features/example/index.ts": "export {};\n",
+  });
+  const crlfRoot = await createFixture({
+    "apps/web/src/features/example/index.ts": "export {};\r\n",
+  });
+
+  const [lfEvidence, crlfEvidence] = await Promise.all([
+    createSecurityReviewEvidence(lfRoot),
+    createSecurityReviewEvidence(crlfRoot),
+  ]);
+
+  assert.equal(crlfEvidence.sourceDigest, lfEvidence.sourceDigest);
+});

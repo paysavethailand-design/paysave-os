@@ -36,7 +36,8 @@ async function sourceDigest(projectRoot) {
     const normalized = relative(root, file).split(sep).join("/");
     hash.update(normalized);
     hash.update("\0");
-    hash.update(await readFile(file));
+    const content = await readFile(file, "utf8");
+    hash.update(content.replace(/\r\n?/g, "\n"));
     hash.update("\0");
   }
   return { digest: hash.digest("hex"), fileCount: files.length };
@@ -81,7 +82,14 @@ export async function verifySecurityReviewEvidence(projectRoot, artifactPath = D
     stored.violationCount === current.violationCount &&
     stored.sourceDigest === current.sourceDigest &&
     stored.sourceFileCount === current.sourceFileCount;
-  if (!matches) throw new Error("Security Review architecture evidence is missing or stale");
+  if (!matches) {
+    throw new Error(
+      `Security Review architecture evidence is missing or stale ` +
+        `(stored digest=${stored.sourceDigest}, files=${stored.sourceFileCount}, ` +
+        `violations=${stored.violationCount}; current digest=${current.sourceDigest}, ` +
+        `files=${current.sourceFileCount}, violations=${current.violationCount})`,
+    );
+  }
   return stored;
 }
 
