@@ -7,10 +7,12 @@ import { loadBusinessModule } from "@/features/business-platform/server";
 
 export const dynamic = "force-dynamic";
 
-const moduleAliases: Readonly<Partial<Record<string, BusinessOperationalModuleId>>> = Object.freeze({
-  payments: "commission-finance",
-  commission: "commission-finance",
-});
+const moduleAliases: Readonly<Partial<Record<string, BusinessOperationalModuleId>>> = Object.freeze(
+  {
+    payments: "commission-finance",
+    commission: "commission-finance",
+  },
+);
 
 const modulePermissionPolicies: Readonly<Partial<Record<string, readonly PermissionCode[]>>> =
   Object.freeze({
