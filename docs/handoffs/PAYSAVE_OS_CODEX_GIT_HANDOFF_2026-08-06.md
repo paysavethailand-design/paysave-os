@@ -376,8 +376,52 @@ acceptance, Inventory Save, and cross-tenant denial have all been verified.
 | Independent review | PASS |
 | Commit and push | PASS |
 | Preview control-plane deployment | PASS |
-| Managed Staging admin migration | NOT APPLIED |
-| Runtime `/version` readback | BLOCKED BY VERCEL PROTECTION |
-| Authenticated admin all-pages acceptance | NOT VERIFIED |
-| Live cross-tenant acceptance | NOT VERIFIED |
+| Managed Staging admin permission readback | PASS - exactly 19 Allows |
+| Authenticated admin all-pages acceptance | PASS |
+| Partner dashboard | PASS |
+| Field dashboard | PASS |
+| Recovery Cases | PASS |
+| Recovery Assignments | PASS |
+| Inventory | PASS |
+| Reports | PASS |
+| Payments | PASS |
+| Commission | PASS |
+| Unexpected application `403` | NONE OBSERVED |
 | Production touched | NO |
+
+## 12. Live Acceptance update
+
+This section supersedes the incomplete acceptance state recorded in sections 3, 4, 7, and 10. Those sections are retained as historical context from the earlier handoff.
+
+**Acceptance source branch:** `codex/fix-missing-admin-permissions`
+
+**Acceptance commit:** `3f86a008919806bb47ce7ce02b784abc1ba50bbe`
+
+**Target branch for review:** `fix/single-login-flow`
+
+The accepted source includes:
+
+- tenant-admin access to every supported Dashboard persona;
+- admin access to the Partner and Field dashboards;
+- explicit route-level permission guards for Reports, Payments, and Commission;
+- the idempotent, fail-closed missing Permission Catalog migration for `reports.read`, `payments.read`, and `commission.read`;
+- database and route-level regression tests for permission catalog safety, exact admin access, explicit-only permission matching, and tenant isolation.
+
+Owner-reported Live Acceptance results:
+
+| Surface | Result |
+|---|---|
+| All Dashboard personas | PASS |
+| Partner dashboard | PASS |
+| Field dashboard | PASS |
+| Recovery Cases | PASS |
+| Recovery Assignments | PASS |
+| Inventory | PASS |
+| Reports | PASS |
+| Payments | PASS |
+| Commission | PASS |
+| Unexpected application `403` | NONE OBSERVED |
+| Managed Staging `RC_STAGING` / `admin` | PASS - exactly 19 Allows |
+| Production | NOT TOUCHED |
+
+The Live Acceptance result does not authorize a Production deployment, additional migration apply, RLS changes, permission expansion, or a merge to `main`. The reviewed Pull Request must target only `fix/single-login-flow` and must not be merged automatically.
