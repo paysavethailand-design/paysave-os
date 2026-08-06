@@ -18,7 +18,11 @@ CREATE TABLE iam.roles (
 );
 CREATE TABLE iam.permissions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  code text NOT NULL UNIQUE
+  code text NOT NULL UNIQUE,
+  resource text NOT NULL,
+  action text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE iam.role_permissions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -38,17 +42,48 @@ UNION ALL
 SELECT id,'supervisor','active' FROM tenant.partners WHERE code='RC_STAGING'
 UNION ALL
 SELECT id,'agent','active' FROM tenant.partners WHERE code='RC_STAGING';
-INSERT INTO iam.permissions(code) VALUES
-  ('assets.read'), ('assets.manage'),
-  ('cases.read'), ('cases.manage'),
-  ('assignments.read'), ('assignments.manage'),
-  ('partners.read'), ('partners.manage'),
-  ('customers.read'), ('customers.manage'),
-  ('reports.read'), ('payments.read'), ('commission.read'),
-  ('users.read'), ('users.manage'),
-  ('roles.read'), ('roles.manage'),
-  ('permissions.read'), ('permissions.manage'),
-  ('platform.manage');
+INSERT INTO iam.permissions(code,resource,action) VALUES
+  ('assets.read','assets','read'), ('assets.manage','assets','manage'),
+  ('cases.read','cases','read'), ('cases.manage','cases','manage'),
+  ('assignments.read','assignments','read'), ('assignments.manage','assignments','manage'),
+  ('partners.read','partners','read'), ('partners.manage','partners','manage'),
+  ('customers.read','customers','read'), ('customers.manage','customers','manage'),
+  ('users.read','users','read'), ('users.manage','users','manage'),
+  ('roles.read','roles','read'), ('roles.manage','roles','manage'),
+  ('permissions.read','permissions','read'), ('permissions.manage','permissions','manage'),
+  ('platform.manage','platform','manage');
+
+\ir ../migrations/managed_staging/20260805_000_missing_permission_catalog.sql
+\ir ../migrations/managed_staging/20260805_000_missing_permission_catalog.sql
+
+DO $$
+DECLARE
+  v_catalog integer;
+  v_tenants integer;
+  v_roles integer;
+  v_grants integer;
+BEGIN
+  SELECT count(*) INTO v_catalog
+  FROM iam.permissions p
+  WHERE (p.code,p.resource,p.action) IN (
+    ('reports.read','reports','read'),
+    ('payments.read','payments','read'),
+    ('commission.read','commission','read')
+  );
+  IF v_catalog <> 3 THEN
+    RAISE EXCEPTION 'missing permission catalog expected exactly 3 rows, found %', v_catalog;
+  END IF;
+
+  SELECT count(*) INTO v_tenants FROM tenant.partners;
+  IF v_tenants <> 2 THEN RAISE EXCEPTION 'tenant rows changed during catalog seed'; END IF;
+
+  SELECT count(*) INTO v_roles FROM iam.roles;
+  IF v_roles <> 5 THEN RAISE EXCEPTION 'role rows changed during catalog seed'; END IF;
+
+  SELECT count(*) INTO v_grants FROM iam.role_permissions;
+  IF v_grants <> 0 THEN RAISE EXCEPTION 'role permission rows changed during catalog seed'; END IF;
+END
+$$;
 
 \ir ../migrations/managed_staging/20260805_admin_active_tenant_access.sql
 \ir ../migrations/managed_staging/20260805_admin_active_tenant_access.sql

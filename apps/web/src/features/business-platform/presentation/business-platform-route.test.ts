@@ -22,6 +22,7 @@ describe("Business Platform route composition", () => {
     expect(page).toContain("loadBusinessPlatformOverview");
     expect(modulePage).toContain("loadBusinessModule");
     expect(modulePage).toContain("BusinessModuleView");
+    expect(modulePage).toContain("requirePermission");
     expect(modulePage).toContain('dynamic = "force-dynamic"');
     expect(modulePage).not.toContain("generateStaticParams");
     expect(layout).toContain("BusinessPlatformNavigation");
