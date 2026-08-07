@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { RecoveryApiError } from "../../application/recovery-api-error";
 import { StagingRecoveryRepository } from "./staging-recovery-repository";
 
 const caseRow = {
@@ -83,5 +84,73 @@ describe("StagingRecoveryRepository", () => {
     await expect(
       repository.resolveApproval(caseRow.id, { decision: "approved", note: "ok" }),
     ).rejects.toThrow("staging_runtime_command_not_supported:approval");
+  });
+
+  it.each([
+    [401, "unauthorized"],
+    [403, "forbidden"],
+    [503, "dependency_failure"],
+  ] as const)("preserves a standardized %s API error envelope", async (status, kind) => {
+    const fetcher = vi.fn(async () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error: { code: "recovery_unavailable", message: "Recovery data unavailable" },
+            meta: { correlationId: "corr-safe-123" },
+          }),
+          { status, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+    const repository = new StagingRecoveryRepository({ fetcher });
+
+    const error = await repository.listCases().catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(RecoveryApiError);
+    expect(error).toMatchObject({
+      kind,
+      status,
+      code: "recovery_unavailable",
+      message: "Recovery data unavailable",
+      correlationId: "corr-safe-123",
+    });
+  });
+
+  it("uses a safe fallback when an upstream error is not a standardized JSON envelope", async () => {
+    const repository = new StagingRecoveryRepository({
+      fetcher: vi.fn(async () => new Response("private upstream detail", { status: 502 })),
+    });
+
+    const error = await repository.listCases().catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      kind: "dependency_failure",
+      status: 502,
+      code: "unknown_error",
+      message: "Recovery service request failed",
+      correlationId: null,
+    });
+    expect(String(error)).not.toContain("private upstream detail");
+  });
+
+  it("terminates a hanging request with a bounded timeout", async () => {
+    const fetcher = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("Aborted", "AbortError")),
+          );
+        }),
+    );
+    const repository = new StagingRecoveryRepository({ fetcher, timeoutMs: 5 });
+
+    const error = await repository.listCases().catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      kind: "timeout",
+      code: "request_timeout",
+      status: null,
+      correlationId: null,
+    });
   });
 });

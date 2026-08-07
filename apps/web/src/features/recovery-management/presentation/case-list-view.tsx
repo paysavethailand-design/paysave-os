@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
-  ErrorState,
   Input,
   KpiCard,
 } from "@paysave/ui";
@@ -18,6 +17,7 @@ import { useMemo, useState } from "react";
 import { formatBaht, type RecoveryStage } from "../domain/recovery-case";
 import { CaseTable } from "./case-table";
 import { RecoverySkeleton } from "./recovery-skeleton";
+import { RecoveryErrorState } from "./recovery-error-state";
 import { useCases } from "./use-recovery";
 
 const selectClass =
@@ -42,10 +42,9 @@ export function CaseListView() {
   if (query.isLoading) return <RecoverySkeleton />;
   if (query.isError)
     return (
-      <ErrorState
-        actionLabel="ลองอีกครั้ง"
-        description="Mock Repository ไม่ตอบกลับ"
-        onAction={() => query.refetch()}
+      <RecoveryErrorState
+        error={query.error}
+        onRetry={() => void query.refetch()}
         title="โหลด Recovery Cases ไม่สำเร็จ"
       />
     );

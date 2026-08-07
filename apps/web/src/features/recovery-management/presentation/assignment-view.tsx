@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
-  ErrorState,
   Status,
 } from "@paysave/ui";
 import { ArrowRight, CheckCircle2, UsersRound } from "lucide-react";
@@ -18,6 +17,7 @@ import { useMemo, useState } from "react";
 import { formatBaht } from "../domain/recovery-case";
 import { CasePriority } from "./case-status";
 import { RecoverySkeleton } from "./recovery-skeleton";
+import { RecoveryErrorState } from "./recovery-error-state";
 import { useAgents, useAssignCase, useCases } from "./use-recovery";
 export function AssignmentView() {
   const casesQuery = useCases();
@@ -28,10 +28,19 @@ export function AssignmentView() {
     [casesQuery.data],
   );
   const [caseId, setCaseId] = useState("RC-2026-0015");
-  const [agentId, setAgentId] = useState("agent-03");
+  const [agentId, setAgentId] = useState("");
   if (casesQuery.isLoading || agentsQuery.isLoading) return <RecoverySkeleton />;
   if (casesQuery.isError || agentsQuery.isError)
-    return <ErrorState title="โหลด Assignment Screen ไม่สำเร็จ" description="กรุณาลองใหม่" />;
+    return (
+      <RecoveryErrorState
+        error={casesQuery.error ?? agentsQuery.error}
+        onRetry={() => {
+          void casesQuery.refetch();
+          void agentsQuery.refetch();
+        }}
+        title="โหลด Assignment Screen ไม่สำเร็จ"
+      />
+    );
   const selected = available.find((item) => item.id === caseId);
   return (
     <div className="space-y-6">
@@ -39,7 +48,7 @@ export function AssignmentView() {
         <p className="text-sm font-semibold text-primary">RECOVERY MANAGEMENT</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Assignment Screen</h1>
         <p className="mt-2 text-muted-foreground">
-          มอบหมายเคสแบบ Optimistic UI — หน้าจออัปเดตทันทีก่อน Mock API ตอบกลับ
+          มอบหมายเคสแบบ Optimistic UI โดยยืนยันผลกับ Recovery API ก่อนสรุปสถานะ
         </p>
       </header>
       <div className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
@@ -77,28 +86,37 @@ export function AssignmentView() {
           <Card>
             <CardHeader>
               <CardTitle>เลือกผู้รับผิดชอบ</CardTitle>
-              <CardDescription>แสดง capacity จาก Mock Repository</CardDescription>
+              <CardDescription>ข้อมูลพนักงานที่พร้อมสำหรับการมอบหมายงาน</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {agentsQuery.data?.map((agent) => (
-                <button
-                  aria-pressed={agentId === agent.id}
-                  className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition ${agentId === agent.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}
-                  key={agent.id}
-                  onClick={() => setAgentId(agent.id)}
-                >
-                  <Avatar>
-                    <AvatarFallback>{agent.initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="min-w-0 flex-1">
-                    <b className="block">{agent.name}</b>
-                    <small className="text-muted-foreground">{agent.zone}</small>
-                  </span>
-                  <Badge variant={agent.activeCases / agent.capacity > 0.8 ? "warning" : "success"}>
-                    {agent.activeCases}/{agent.capacity}
-                  </Badge>
-                </button>
-              ))}
+              {agentsQuery.data?.length ? (
+                agentsQuery.data.map((agent) => (
+                  <button
+                    aria-pressed={agentId === agent.id}
+                    className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition ${agentId === agent.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}
+                    key={agent.id}
+                    onClick={() => setAgentId(agent.id)}
+                  >
+                    <Avatar>
+                      <AvatarFallback>{agent.initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1">
+                      <b className="block">{agent.name}</b>
+                      <small className="text-muted-foreground">{agent.zone}</small>
+                    </span>
+                    <Badge
+                      variant={agent.activeCases / agent.capacity > 0.8 ? "warning" : "success"}
+                    >
+                      {agent.activeCases}/{agent.capacity}
+                    </Badge>
+                  </button>
+                ))
+              ) : (
+                <EmptyState
+                  description="ระบบยังไม่มีแหล่งข้อมูลพนักงานสำหรับ Assignment"
+                  title="ยังไม่มีข้อมูลพนักงาน"
+                />
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -120,18 +138,22 @@ export function AssignmentView() {
                   </div>
                   <Button
                     className="w-full"
-                    disabled={mutation.isPending}
+                    disabled={mutation.isPending || !agentId}
                     onClick={() => mutation.mutate({ caseId, agentId })}
                   >
                     <UsersRound className="size-4" />
-                    {mutation.isPending ? "Mock API กำลังยืนยัน..." : "มอบหมายทันที"}
+                    {mutation.isPending
+                      ? "กำลังยืนยันการมอบหมาย..."
+                      : agentId
+                        ? "มอบหมายทันที"
+                        : "ยังไม่มีข้อมูลพนักงาน"}
                   </Button>
                   <p
                     aria-live="polite"
                     className="flex items-center gap-2 text-xs text-muted-foreground"
                   >
                     <CheckCircle2 className="size-4 text-success" />
-                    ระบบ rollback อัตโนมัติหาก Mock API ล้มเหลว
+                    ระบบ rollback อัตโนมัติหากการมอบหมายล้มเหลว
                   </p>
                 </>
               ) : (
