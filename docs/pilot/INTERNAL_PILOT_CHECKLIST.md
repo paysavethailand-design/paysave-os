@@ -233,18 +233,85 @@
 
 ## Pilot Sign-Off
 
-| Gate                                     | Result               | Evidence / Notes |
-| ---------------------------------------- | -------------------- | ---------------- |
-| Authentication and session               | [ ] PASS [ ] FAIL    |                  |
-| Admin and persona dashboards             | [ ] PASS [ ] FAIL    |                  |
-| Business modules                         | [ ] PASS [ ] FAIL    |                  |
-| Same-tenant authorization                | [ ] PASS [ ] FAIL    |                  |
-| Cross-tenant isolation                   | [ ] PASS [ ] FAIL    |                  |
-| Version and readiness                    | [ ] PASS [ ] FAIL    |                  |
-| No real customer data used unnecessarily | [ ] CONFIRMED        |                  |
-| Production untouched                     | [ ] CONFIRMED        |                  |
-| Pilot decision                           | [ ] PROCEED [ ] HOLD |                  |
+## Automated Pilot Result - 06 Aug 2026
+
+- Preview: <https://paysave-os-dmxbfayh4-paysave-v1.vercel.app>
+- Tested source revision: `81ba1c80ce594b4ce15fba97319f7dfa0a3d0d81`
+- Browser session: Owner-authenticated PAYSAVE Admin in Demo workspace
+- Overall result: FAIL
+
+| Module / Check              | Status     | URL                                 | Correlation ID | Notes                                                                                                                                                                     |
+| --------------------------- | ---------- | ----------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login                       | NOT TESTED | `/dashboard/admin`                  | N/A            | Owner completed login manually as required; credentials and session data were not inspected.                                                                              |
+| Session refresh             | PASS       | `/dashboard/admin`                  | N/A            | Browser refresh preserved the authenticated admin dashboard without a loop or unexpected authorization response.                                                          |
+| Admin Dashboard             | PASS       | `/dashboard/admin`                  | N/A            | Loaded after direct navigation and refresh.                                                                                                                               |
+| Partner Dashboard           | PASS       | `/dashboard/partner`                | N/A            | Loaded for admin without unexpected `403` or `/unauthorized`.                                                                                                             |
+| Field Dashboard             | PASS       | `/dashboard/field`                  | N/A            | Loaded for admin without unexpected `403` or `/unauthorized`.                                                                                                             |
+| Inventory list/detail       | PASS       | `/inventory`                        | N/A            | Inventory list and synthetic `LIVE-TEST` detail loaded.                                                                                                                   |
+| Inventory edit/save/refresh | PASS       | `/inventory`                        | N/A            | Renamed the synthetic test reference to `RC-CONC-daa14f6ef64ec645-PILOT-TEST`; save completed and the value persisted after refresh.                                      |
+| Recovery Cases              | FAIL       | `/recovery/cases`                   | N/A            | `โหลด Recovery Cases ไม่สำเร็จ` / `Mock Repository ไม่ตอบกลับ`; Retry returned the same failure. Screenshot capture was unavailable.                                      |
+| Assignments                 | FAIL       | `/recovery/assignments`             | N/A            | Main content did not finish loading during the observation window; no actionable error or Correlation ID was rendered. Screenshot capture was unavailable.                |
+| Reports                     | PASS       | `/business/reports`                 | N/A            | Direct URL loaded the tenant-scoped application read model without unexpected denial.                                                                                     |
+| Payments                    | PASS       | `/business/payments`                | N/A            | Direct URL loaded successfully; no real payment action was performed.                                                                                                     |
+| Commission                  | PASS       | `/business/commission`              | N/A            | Direct URL loaded successfully; no real payout action was performed.                                                                                                      |
+| Direct URL access           | PASS       | Dashboard and business routes above | N/A            | Authorized direct routes loaded without unexpected `403`, `/unauthorized`, or redirect loop.                                                                              |
+| Same-tenant access          | PASS       | Routes above                        | N/A            | Current admin account saw only the active Demo workspace data exposed by each route.                                                                                      |
+| Cross-tenant denial         | NOT TESTED | N/A                                 | N/A            | No approved synthetic second-tenant account was available; no account or tenant was created.                                                                              |
+| `/version`                  | PASS       | `/version`                          | N/A            | Returned source revision `81ba1c80ce594b4ce15fba97319f7dfa0a3d0d81`.                                                                                                      |
+| `/readyz`                   | PASS       | `/readyz`                           | N/A            | Returned `status: ready`; all seven dependency checks reported `ok: true`.                                                                                                |
+| Logout                      | FAIL       | `/dashboard/admin`                  | N/A            | Activating `ออกจากระบบ` did not leave the protected page. Direct navigation to `/dashboard/admin` still rendered the admin dashboard. Screenshot capture was unavailable. |
+
+### Failed Steps
+
+1. Recovery Cases: Opened the route and activated Retry. The page continued to report `Mock Repository ไม่ตอบกลับ`.
+2. Assignments: Opened the route and waited beyond the normal page-load interval. Main assignment content never rendered.
+3. Logout: Activated the account-menu logout control, then revisited the protected admin route. The authenticated dashboard remained accessible.
+
+### Evidence
+
+- Recovery Cases screenshot path: unavailable because browser screenshot capture failed.
+- Assignments screenshot path: unavailable because browser screenshot capture failed.
+- Logout screenshot path: unavailable because browser screenshot capture failed.
+- No password, cookie, token, session value, secret, or environment value was read or recorded.
+- No migration was applied and Production was not accessed.
+
+| Gate                                     | Result     | Evidence / Notes                                        |
+| ---------------------------------------- | ---------- | ------------------------------------------------------- |
+| Authentication and session               | FAIL       | Logout did not invalidate protected-route access.       |
+| Admin and persona dashboards             | PASS       | Admin, Partner, and Field loaded for the current admin. |
+| Business modules                         | FAIL       | Recovery Cases and Assignments failed.                  |
+| Same-tenant authorization                | PASS       | Current tenant only.                                    |
+| Cross-tenant isolation                   | NOT TESTED | No approved synthetic second-tenant account.            |
+| Version and readiness                    | PASS       | Merge commit and ready dependencies confirmed.          |
+| No real customer data used unnecessarily | PASS       | Synthetic Inventory test record used.                   |
+| Production untouched                     | PASS       | Preview and Managed Staging only.                       |
+| Pilot decision                           | FAIL       | Hold for owner review of failed workflows.              |
 
 Pilot owner/signature:
 
 Date/time:
+
+## Pilot Blocker Fix Live Verification - 07 Aug 2026
+
+- Branch: `codex/fix-pilot-recovery-observability`
+- Source revision: `098b19af1cb9eff850e69ab69fa6a3d8fa6b7950`
+- Preview: <https://paysave-os-ewwpt81i8-paysave-v1.vercel.app>
+- Browser session: Owner-authenticated PAYSAVE Admin in Managed Staging preview
+- Overall result: PASS for the blocker-fix evidence and reliability scope
+- Production touched: NO
+- Migration applied: NO
+
+| Module / Check | Status     | URL                     | Correlation ID | Notes                                                                                                                                         |
+| -------------- | ---------- | ----------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Recovery Cases | PASS       | `/recovery/cases`       | N/A            | The page loaded successfully. Current runtime displays mock recovery cases; the previous stale `Mock Repository` failure was not reproduced.  |
+| Assignments    | PASS       | `/recovery/assignments` | N/A            | The page reached a terminal empty state and explicitly displayed `ยังไม่มีข้อมูลพนักงาน`; no workforce repository or fake agents were added.  |
+| Logout         | PASS       | `/dashboard/admin`      | N/A            | Sign-out returned to the sign-in experience. Revisiting and refreshing `/dashboard/admin` redirected to `/sign-in?next=%2Fdashboard%2Fadmin`. |
+| `/version`     | PASS       | `/version`              | N/A            | Returned source revision `098b19af1cb9eff850e69ab69fa6a3d8fa6b7950`.                                                                          |
+| `/readyz`      | PASS       | `/readyz`               | N/A            | Returned `status: ready`; dependency checks reported `ok: true`.                                                                              |
+| Cross-tenant   | NOT TESTED | N/A                     | N/A            | Functional cross-tenant denial is not considered passed until an approved synthetic second-tenant test account is available.                  |
+
+### Functional Pilot Gaps Remaining
+
+1. Cross-tenant functional denial remains `NOT TESTED` until Owner provides an approved synthetic second-tenant account and fixtures.
+2. Recovery currently renders mock recovery cases; this is accepted for the blocker-fix evidence pass but remains a pilot fact to preserve.
+3. Assignments currently renders the explicit empty state `ยังไม่มีข้อมูลพนักงาน`; this is accepted for the blocker-fix evidence pass and confirms no fake workforce data was introduced.

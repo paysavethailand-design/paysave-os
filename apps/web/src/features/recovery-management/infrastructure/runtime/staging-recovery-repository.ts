@@ -1,4 +1,5 @@
 import type { RecoveryRepository } from "../../application/ports/recovery-repository";
+import { RecoveryApiError, type RecoveryApiErrorKind } from "../../application/recovery-api-error";
 import type {
   AddContactInput,
   ApprovalInput,
@@ -16,6 +17,11 @@ type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respons
 interface ApiEnvelope<T> {
   readonly data: T;
   readonly meta: { readonly correlationId: string; readonly nextCursor?: string | null };
+}
+
+interface ApiErrorEnvelope {
+  readonly error?: { readonly code?: unknown; readonly message?: unknown };
+  readonly meta?: { readonly correlationId?: unknown };
 }
 
 interface RecoveryCaseRow {
@@ -88,12 +94,92 @@ function timelineType(value: string): TimelineEvent["type"] {
   return "status";
 }
 
+function kindForStatus(status: number): RecoveryApiErrorKind {
+  if (status === 401) return "unauthorized";
+  if (status === 403) return "forbidden";
+  if (status >= 500) return "dependency_failure";
+  return "unknown";
+}
+
+async function parseErrorEnvelope(response: Response): Promise<RecoveryApiError> {
+  let envelope: ApiErrorEnvelope = {};
+  try {
+    envelope = (await response.json()) as ApiErrorEnvelope;
+  } catch {
+    // Non-JSON upstream failures still receive a safe local error contract.
+  }
+  const code = typeof envelope.error?.code === "string" ? envelope.error.code : "unknown_error";
+  const message =
+    typeof envelope.error?.message === "string"
+      ? envelope.error.message
+      : "Recovery service request failed";
+  const correlationId =
+    typeof envelope.meta?.correlationId === "string" ? envelope.meta.correlationId : null;
+  return new RecoveryApiError(
+    kindForStatus(response.status),
+    code,
+    message,
+    response.status,
+    correlationId,
+  );
+}
+
 async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {
   if (!response.ok) {
-    if (response.status === 404) throw new Error("staging_runtime_not_found");
-    throw new Error(`staging_runtime_http_error:${response.status}`);
+    throw await parseErrorEnvelope(response);
   }
   return (await response.json()) as ApiEnvelope<T>;
+}
+
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(
+  fetcher: Fetcher,
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      fetcher(input, { ...init, signal: controller.signal }).catch((error: unknown) => {
+        if (error instanceof RecoveryApiError) throw error;
+        if (controller.signal.aborted) {
+          throw new RecoveryApiError(
+            "timeout",
+            "request_timeout",
+            "Recovery service request timed out",
+            null,
+            null,
+          );
+        }
+        throw new RecoveryApiError(
+          "unknown",
+          "network_error",
+          "Recovery service request failed",
+          null,
+          null,
+        );
+      }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort();
+          reject(
+            new RecoveryApiError(
+              "timeout",
+              "request_timeout",
+              "Recovery service request timed out",
+              null,
+              null,
+            ),
+          );
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 function unsupported(command: string): never {
@@ -103,17 +189,24 @@ function unsupported(command: string): never {
 /** Browser-side adapter for the existing authenticated Recovery Core API. No mock fallback is allowed. */
 export class StagingRecoveryRepository implements RecoveryRepository {
   private readonly fetcher: Fetcher;
+  private readonly timeoutMs: number;
 
-  constructor(options: { readonly fetcher?: Fetcher } = {}) {
+  constructor(options: { readonly fetcher?: Fetcher; readonly timeoutMs?: number } = {}) {
     this.fetcher = options.fetcher ?? fetch;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   async listCases(): Promise<readonly CaseSummary[]> {
-    const response = await this.fetcher("/api/v1/recovery/cases?limit=100", {
-      method: "GET",
-      credentials: "same-origin",
-      headers: { accept: "application/json" },
-    });
+    const response = await fetchWithTimeout(
+      this.fetcher,
+      "/api/v1/recovery/cases?limit=100",
+      {
+        method: "GET",
+        credentials: "same-origin",
+        headers: { accept: "application/json" },
+      },
+      this.timeoutMs,
+    );
     return (await parseEnvelope<readonly RecoveryCaseRow[]>(response)).data.map(toSummary);
   }
 
@@ -121,16 +214,26 @@ export class StagingRecoveryRepository implements RecoveryRepository {
     try {
       const encoded = encodeURIComponent(caseId);
       const [caseResponse, timelineResponse] = await Promise.all([
-        this.fetcher(`/api/v1/recovery/cases/${encoded}`, {
-          method: "GET",
-          credentials: "same-origin",
-          headers: { accept: "application/json" },
-        }),
-        this.fetcher(`/api/v1/recovery/cases/${encoded}/timeline?limit=100`, {
-          method: "GET",
-          credentials: "same-origin",
-          headers: { accept: "application/json" },
-        }),
+        fetchWithTimeout(
+          this.fetcher,
+          `/api/v1/recovery/cases/${encoded}`,
+          {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { accept: "application/json" },
+          },
+          this.timeoutMs,
+        ),
+        fetchWithTimeout(
+          this.fetcher,
+          `/api/v1/recovery/cases/${encoded}/timeline?limit=100`,
+          {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { accept: "application/json" },
+          },
+          this.timeoutMs,
+        ),
       ]);
       const row = (await parseEnvelope<RecoveryCaseRow>(caseResponse)).data;
       const timelineRows = (await parseEnvelope<readonly TimelineRow[]>(timelineResponse)).data;
@@ -175,7 +278,7 @@ export class StagingRecoveryRepository implements RecoveryRepository {
         },
       };
     } catch (error) {
-      if (error instanceof Error && error.message === "staging_runtime_not_found") return null;
+      if (error instanceof RecoveryApiError && error.status === 404) return null;
       throw error;
     }
   }
